@@ -93,11 +93,3 @@ If you wish to terminate the watchdog loop without reinstalling:
 2. The installer will have written an empty file named `watchdog.disabled` to your installation directory.
 3. When this file exists, Zenith Shield runs as a single, normal process that can be ended safely via Task Manager.
 
----
-
-## Brand Positioning: Local and International Appeal
-
-The repository name uses the term **PMO** (Porn, Masturbation, Orgasm). This naming convention is optimized for dual market relevance:
-* **International Self-Improvement**: The term PMO is globally recognized within digital detox, NoFap, and self-control communities (e.g., Reddit self-help subreddits), offering high organic search visibility worldwide.
-* **Local Cultural Adoption**: In regions like Indonesia, the abbreviation PMO has high viral awareness and community discussion status, establishing direct cultural alignment for target audiences.
-* **Sleek Product Presentation**: The user-facing software is branded clean and minimalist as the **Zenith Suite** (representing mental clarity and peak focus), maintaining an aesthetic suitable for corporate and professional workspaces.
