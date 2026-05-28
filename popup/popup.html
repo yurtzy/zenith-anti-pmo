@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Zenith Anti-PMO</title>
+  <link rel="stylesheet" href="popup.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="popup-container">
+    
+    <!-- Top Header -->
+    <header class="popup-header">
+      <div class="brand">
+        <svg class="brand-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <circle cx="12" cy="12" r="2" fill="currentColor"></circle>
+        </svg>
+        <span class="brand-name">ZENITH</span>
+      </div>
+      <div class="status-indicator">
+        <span class="status-dot"></span>
+        <span class="status-text">ACTIVE</span>
+      </div>
+    </header>
+
+    <!-- Streak Display Box -->
+    <section class="streak-section">
+      <div class="streak-box">
+        <span class="streak-label font-title">CURRENT STREAK</span>
+        <div class="streak-value">
+          <span id="streak-days-val" class="streak-num">0</span>
+          <span class="streak-days-lbl">DAYS</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Urge Stats Quick View -->
+    <section class="stats-section">
+      <div class="stat-mini">
+        <span class="stat-mini-label">Urges Surfed</span>
+        <span id="urges-surfed-val" class="stat-mini-num">0</span>
+      </div>
+    </section>
+
+    <!-- Action Commands -->
+    <footer class="popup-actions">
+      <button id="popup-emergency-btn" class="btn btn-primary">Emergency Breathing</button>
+      <button id="popup-dashboard-btn" class="btn btn-secondary">Open Control Center</button>
+    </footer>
+
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

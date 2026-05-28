@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenith - Mindful Pause</title>
+  <link rel="stylesheet" href="intervention.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="intervention-overlay">
+    <div class="intervention-card">
+      
+      <!-- Logo Accent -->
+      <div class="logo-accent">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <circle cx="12" cy="12" r="2" fill="currentColor"></circle>
+        </svg>
+        <span>ZENITH PAUSE</span>
+      </div>
+
+      <!-- Core Message -->
+      <h1 class="pause-title" id="pause-title">Pause. Breathe. Reflect.</h1>
+      <p class="pause-subtitle" id="pause-subtitle">Your brain is experiencing a temporary surge of dopamine-seeking impulses. This urge is a wave that peaks and subsides. You are fully capable of riding it out.</p>
+
+      <!-- Breathing Exercise Indicator -->
+      <div class="breathing-session">
+        <div class="breathing-circle-outer">
+          <div class="breathing-ring"></div>
+          <div id="breathing-circle" class="breathing-circle"></div>
+          <div class="breathing-text" id="breathing-text">Focus</div>
+        </div>
+        <div class="breathing-instruction" id="breathing-instruction">Preparing breathing guide...</div>
+      </div>
+
+      <!-- Progressive Delay Progress Bar -->
+      <div class="timer-box" id="timer-box">
+        <div class="progress-bar-bg">
+          <div id="timer-progress" class="progress-bar-fill"></div>
+        </div>
+        <span id="timer-label" class="timer-label">Stabilizing attention: 10s</span>
+      </div>
+
+      <!-- Action Options -->
+      <div class="action-grid hide" id="action-grid">
+        <button id="safety-btn" class="btn btn-primary btn-block">I Choose My Goals. Redirect to Safety</button>
+        <button id="breathe-again-btn" class="btn btn-secondary">Breathe Again</button>
+        <button id="proceed-btn" class="btn btn-danger-mute">Proceed Anyway</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="intervention.js"></script>
+</body>
+</html>

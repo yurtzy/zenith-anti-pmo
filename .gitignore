@@ -1,0 +1,3 @@
+# Local configurations
+watchdog.disabled
+*.log

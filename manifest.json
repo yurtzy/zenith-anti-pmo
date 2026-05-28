@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Zenith Anti-PMO",
+  "version": "1.0.0",
+  "description": "A premium, minimalist mindfulness companion to help you surf the urge and build healthy habits. No gradients, no distraction, pure focus.",
+  "permissions": [
+    "storage",
+    "webNavigation",
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "dashboard/dashboard.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuP0Dm2ebfYxVdWon+U4Fbl/VlvszfGy1gStErd1jQjYDYS90VturqD96ZkWFpbOXXbV1aCLyMvw/D0k/n5eCciynVl7J5buL2GJyr2alMYgnEC0LgcWaZ/GYeTDS7Zhp1bpsWrFOZWzLTpmewD8vaCX30Q1NcZxWTD+c3Ao9Lz8qShVl6jRqVoWWwgb4RJiWnaUuJ/15RvMpf7bmdYEV8i3av+YTWHky35hzWmOfJoL569FpIF4IC4ZkaqXPp40PPlHHqD42IgYuetyeV5Dkbf28nfH58d7E4MTZb/unj17qHcm38i2jpnaMpYtwQEr79g6skEdjAg6iJYfM5EyYHwIDAQAB"
+}

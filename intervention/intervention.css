@@ -1,0 +1,279 @@
+/* Zenith Anti-PMO - Intervention UI Stylesheet */
+/* Premium flat minimalist aesthetic. No emojis. No gradients. */
+
+:root {
+  --bg-main: #060608;
+  --bg-card: #0e0e11;
+  --border-color: #1a1a20;
+  
+  --text-primary: #ffffff;
+  --text-secondary: #8e8e93;
+  --text-muted: #4e4e54;
+  
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+  --color-danger-mute: #2a1414;
+  --color-danger-mute-border: #4a1f1f;
+  --color-danger-text: #ef4444;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+h1, h2, h3, .breathing-text {
+  font-family: 'Outfit', sans-serif;
+}
+
+.intervention-overlay {
+  width: 100%;
+  max-width: 580px;
+  padding: 20px;
+}
+
+.intervention-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Logo Area */
+.logo-accent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+.logo-accent svg {
+  color: var(--color-primary);
+}
+
+/* Typography */
+.pause-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+
+.pause-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 35px;
+  max-width: 460px;
+}
+
+/* Breathing Session Component */
+.breathing-session {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.breathing-circle-outer {
+  width: 170px;
+  height: 170px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Solid Ring Outline */
+.breathing-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid #1a1a24;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Pulsing Circle Body */
+.breathing-circle {
+  width: 100px;
+  height: 100px;
+  background-color: var(--color-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(1);
+  transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1), background-color 1.5s ease;
+  z-index: 1;
+}
+
+/* Circle states driven by Javascript */
+.breathing-circle.inhale {
+  transform: scale(1.5);
+  background-color: var(--color-primary);
+}
+
+.breathing-circle.hold {
+  transform: scale(1.5);
+  background-color: #1e3a8a; /* Dark Solid Navy */
+}
+
+.breathing-circle.exhale {
+  transform: scale(1);
+  background-color: #3b82f6; /* Bright Solid Blue */
+}
+
+.breathing-circle.resting-hold {
+  transform: scale(1);
+  background-color: #172554; /* Deep Solid Navy */
+}
+
+.breathing-text {
+  position: absolute;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  z-index: 2;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.breathing-instruction {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  height: 24px;
+}
+
+/* Progress / Delay Bar */
+.timer-box {
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 10px;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background-color: #131318;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  border: 1px solid #1a1a22;
+}
+
+.progress-bar-fill {
+  width: 0%;
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+
+.timer-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+/* Grid of Actions */
+.action-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 380px;
+  margin-top: 15px;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.action-grid.hide {
+  display: none;
+}
+
+/* Button Elements */
+.btn {
+  width: 100%;
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 14px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--text-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background-color: #121217;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+  background-color: #1a1a24;
+  color: var(--text-primary);
+}
+
+.btn-danger-mute {
+  background-color: var(--color-danger-mute);
+  border: 1px solid var(--color-danger-mute-border);
+  color: var(--color-danger-text);
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+.btn-danger-mute:hover {
+  background-color: #3f1a1a;
+  border-color: #662727;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
