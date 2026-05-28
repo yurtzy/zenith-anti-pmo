@@ -113,6 +113,53 @@ h1, h2, h3, .logo-text, .streak-days {
   border-top: 1px solid var(--border-color);
 }
 
+.support-area {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.support-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.support-links {
+  display: flex;
+  gap: 8px;
+}
+
+.support-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  display: inline-block;
+  text-decoration: none;
+}
+
+.support-link:hover {
+  color: white;
+}
+
+.support-link.link-saweria:hover {
+  border-color: var(--color-success);
+  color: var(--color-success-hover);
+}
+
+.support-link.link-bmc:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-hover);
+}
+
 .version-tag {
   font-size: 0.75rem;
   color: var(--text-muted);

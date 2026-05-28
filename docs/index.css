@@ -470,6 +470,98 @@ a {
   color: #3b82f6;
 }
 
+/* Donation Section Styling */
+.donate-section {
+  padding: 80px 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.donate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.donate-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 35px 25px;
+  border-radius: 12px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  transition: all 0.25s ease-in-out;
+  cursor: pointer;
+}
+
+.donate-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-primary);
+  background-color: var(--bg-card-hover);
+}
+
+.donate-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  background-color: rgba(37, 99, 235, 0.1);
+  color: var(--color-primary);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#donate-saweria .donate-icon-wrapper {
+  background-color: rgba(5, 150, 105, 0.1);
+  color: var(--color-success);
+}
+
+#donate-saweria:hover {
+  border-color: var(--color-success);
+}
+
+#donate-trakteer .donate-icon-wrapper {
+  background-color: rgba(217, 119, 6, 0.1);
+  color: var(--color-success); /* Using success color contextually or standard color */
+}
+
+#donate-trakteer:hover {
+  border-color: var(--color-primary-hover);
+}
+
+.donate-card h3 {
+  font-size: 1.2rem;
+  color: white;
+}
+
+.donate-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  flex-grow: 1;
+}
+
+.donate-link-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-top: 10px;
+  transition: transform 0.2s ease;
+}
+
+#donate-saweria .donate-link-text {
+  color: var(--color-success);
+}
+
+#donate-trakteer .donate-link-text {
+  color: var(--color-primary);
+}
+
+.donate-card:hover .donate-link-text {
+  transform: translateX(4px);
+}
+
 /* Footer */
 .site-footer {
   padding: 40px 0;

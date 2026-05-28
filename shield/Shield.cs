@@ -17,7 +17,8 @@ namespace ZenithShield
             "masturbate", "orgasm", "blowjob", "cuckold", "gangbang", "camgirl",
             "eroge", "rule34", "doujinshi", "nhentai", "playboy", "nekopoi",
             "hentaihaven", "javfree", "bukkake", "civitai", "comfyui", 
-            "stable diffusion", "sillytavern"
+            "stable diffusion", "sillytavern", "bokep", "sange", "ngocok", 
+            "lendir", "cersex", "colay", "colok", "seks", "mesum", "porno", "semi"
         };
 
         // Browsers to strictly monitor / terminate if they contain triggers

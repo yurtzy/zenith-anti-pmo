@@ -87,7 +87,18 @@ const ZenithDictionary = {
     'sillytavern',
     'crushon.ai',
     'character.ai nsfw',
-    'jailbreak prompt'
+    'jailbreak prompt',
+    'bokep',
+    'sange',
+    'ngocok',
+    'lendir',
+    'cersex',
+    'colay',
+    'colok',
+    'seks',
+    'mesum',
+    'porno',
+    'semi'
   ],
 
   // Common adult paths/categories that might appear inside normal websites
