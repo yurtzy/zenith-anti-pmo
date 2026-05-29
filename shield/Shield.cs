@@ -208,7 +208,10 @@ namespace ZenithShield
                         processName == "zenith-shield" || processName == "chrome" ||
                         processName == "msedge" || processName == "firefox" ||
                         processName == "opera" || processName == "brave" ||
-                        processName == "iexplore" || processName == "waterfox")
+                        processName == "iexplore" || processName == "waterfox" ||
+                        processName == "vivaldi" || processName == "arc" ||
+                        processName == "thorium" || processName == "librewolf" ||
+                        processName == "yandex")
                     {
                         continue;
                     }
