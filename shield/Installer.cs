@@ -75,8 +75,64 @@ namespace ZenithInstaller
         private Label finishLabel;
         private TextBox finishDesc;
 
+        // Step 6 & 7: Uninstall Controls
+        private Button uninstallNavButton;
+        private Label uninstallLabel;
+        private Label uninstallDesc;
+        private Label hwidLabel;
+        private TextBox hwidTextBox;
+        private Button copyHwidButton;
+        private Label keyLabel;
+        private TextBox keyTextBox;
+        private Label uninstallStatusLabel;
+        private bool uninstallFilesCleaned = true;
+
+        private const string PrivateSalt = "zenith_focus_suite_private_salt_2026";
+
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern bool HideCaret(IntPtr hWnd);
+
+        private string GetHWID()
+        {
+            try
+            {
+                object val = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography", "MachineGuid", "");
+                string machineGuid = val != null ? val.ToString() : "FallbackGuid";
+                using (System.Security.Cryptography.SHA256 sha = System.Security.Cryptography.SHA256.Create())
+                {
+                    byte[] hash = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(machineGuid));
+                    string hex = BitConverter.ToString(hash).Replace("-", "");
+                    return string.Format("ZEN-{0}-{1}", hex.Substring(0, 4), hex.Substring(4, 4));
+                }
+            }
+            catch
+            {
+                return "ZEN-FAIL-HWID";
+            }
+        }
+
+        private bool ValidateDeactivationKey(string hwid, string inputKey)
+        {
+            try
+            {
+                using (System.Security.Cryptography.SHA256 sha = System.Security.Cryptography.SHA256.Create())
+                {
+                    byte[] hash = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(hwid + PrivateSalt));
+                    string hex = BitConverter.ToString(hash).Replace("-", "").Substring(0, 16);
+                    string expected = string.Format("KEY-{0}-{1}-{2}-{3}", 
+                        hex.Substring(0, 4), 
+                        hex.Substring(4, 4), 
+                        hex.Substring(8, 4), 
+                        hex.Substring(12, 4)
+                    );
+                    return string.Equals(inputKey.Trim(), expected, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
         public InstallerForm()
         {
@@ -166,8 +222,32 @@ namespace ZenithInstaller
             backButton.FlatAppearance.BorderSize = 1;
             backButton.FlatAppearance.BorderColor = Color.FromArgb(34, 34, 39);
             backButton.Cursor = Cursors.Hand;
-            backButton.Click += (s, e) => ShowStep(currentStep - 1);
+            backButton.Click += (s, e) => {
+                if (currentStep == 6)
+                {
+                    ShowStep(0);
+                }
+                else
+                {
+                    ShowStep(currentStep - 1);
+                }
+            };
             this.Controls.Add(backButton);
+
+            // Uninstall Nav Button (visible on step 0)
+            uninstallNavButton = new Button();
+            uninstallNavButton.Text = "Uninstall";
+            uninstallNavButton.Size = new Size(100, 36);
+            uninstallNavButton.Location = new Point(30, this.Height - 65);
+            uninstallNavButton.FlatStyle = FlatStyle.Flat;
+            uninstallNavButton.BackColor = Color.FromArgb(20, 20, 24); // Solid Charcoal
+            uninstallNavButton.ForeColor = Color.FromArgb(142, 142, 147);
+            uninstallNavButton.Font = new Font("Arial", 9F, FontStyle.Bold);
+            uninstallNavButton.FlatAppearance.BorderSize = 1;
+            uninstallNavButton.FlatAppearance.BorderColor = Color.FromArgb(34, 34, 39);
+            uninstallNavButton.Cursor = Cursors.Hand;
+            uninstallNavButton.Click += (s, e) => ShowStep(6);
+            this.Controls.Add(uninstallNavButton);
 
             // Bottom Border Decoration
             Panel borderLine = new Panel();
@@ -184,6 +264,11 @@ namespace ZenithInstaller
             nextButton.Visible = true;
             nextButton.Width = 130;
             nextButton.Location = new Point(this.Width - 160, this.Height - 65);
+
+            if (uninstallNavButton != null)
+            {
+                uninstallNavButton.Visible = (currentStep == 0);
+            }
 
             if (currentStep == 0)
             {
@@ -204,7 +289,7 @@ namespace ZenithInstaller
                 welcomeDesc.Text = "Welcome to Zenith Anti-PMO Setup.\n\nThis wizard will install your standalone Desktop App, Extension files, and system-wide background Shield.\n\nAll components are extremely lightweight (under 90 KB total) and operate silently using flat, distraction-free matte styling.";
                 welcomeDesc.Font = new Font("Arial", 9.5F);
                 welcomeDesc.ForeColor = Color.FromArgb(142, 142, 147);
-                welcomeDesc.Size = new Size(contentPanel.Width - 20, 120);
+                welcomeDesc.Size = new Size(contentPanel.Width - 20, 100);
                 welcomeDesc.Location = new Point(0, 55);
                 contentPanel.Controls.Add(welcomeDesc);
             }
@@ -504,6 +589,135 @@ namespace ZenithInstaller
                 finishDesc.Location = new Point(0, 40);
                 contentPanel.Controls.Add(finishDesc);
             }
+            else if (currentStep == 6)
+            {
+                // Step 6: Uninstall Screen
+                backButton.Visible = true;
+                nextButton.Text = "Validate & Remove";
+                nextButton.Enabled = true;
+
+                uninstallLabel = new Label();
+                uninstallLabel.Text = "Deactivate & Uninstall Zenith";
+                uninstallLabel.Font = new Font("Arial", 13F, FontStyle.Bold);
+                uninstallLabel.ForeColor = Color.White;
+                uninstallLabel.Size = new Size(contentPanel.Width, 25);
+                uninstallLabel.Location = new Point(0, 5);
+                contentPanel.Controls.Add(uninstallLabel);
+
+                uninstallDesc = new Label();
+                uninstallDesc.Text = "Enter your Deactivation Key to remove Zenith. To obtain a key, send your Hardware ID below to zenith.suite.help@gmail.com.";
+                uninstallDesc.Font = new Font("Arial", 9F);
+                uninstallDesc.ForeColor = Color.FromArgb(142, 142, 147);
+                uninstallDesc.Size = new Size(contentPanel.Width - 10, 35);
+                uninstallDesc.Location = new Point(0, 35);
+                contentPanel.Controls.Add(uninstallDesc);
+
+                // Hardware ID Section
+                hwidLabel = new Label();
+                hwidLabel.Text = "YOUR HARDWARE ID:";
+                hwidLabel.Font = new Font("Arial", 8.5F, FontStyle.Bold);
+                hwidLabel.ForeColor = Color.FromArgb(142, 142, 147);
+                hwidLabel.Size = new Size(150, 20);
+                hwidLabel.Location = new Point(0, 80);
+                contentPanel.Controls.Add(hwidLabel);
+
+                hwidTextBox = new TextBox();
+                hwidTextBox.Text = GetHWID();
+                hwidTextBox.ReadOnly = true;
+                hwidTextBox.BackColor = Color.FromArgb(20, 20, 24);
+                hwidTextBox.ForeColor = Color.White;
+                hwidTextBox.BorderStyle = BorderStyle.FixedSingle;
+                hwidTextBox.Font = new Font("Consolas", 10F, FontStyle.Bold);
+                hwidTextBox.Size = new Size(180, 25);
+                hwidTextBox.Location = new Point(140, 77);
+                hwidTextBox.Cursor = Cursors.Default;
+                hwidTextBox.MouseEnter += (s, e) => hwidTextBox.Focus();
+                hwidTextBox.GotFocus += (s, e) => HideCaret(hwidTextBox.Handle);
+                contentPanel.Controls.Add(hwidTextBox);
+
+                copyHwidButton = new Button();
+                copyHwidButton.Text = "Copy";
+                copyHwidButton.Size = new Size(60, 23);
+                copyHwidButton.Location = new Point(325, 77);
+                copyHwidButton.FlatStyle = FlatStyle.Flat;
+                copyHwidButton.BackColor = Color.FromArgb(26, 26, 32);
+                copyHwidButton.ForeColor = Color.White;
+                copyHwidButton.FlatAppearance.BorderColor = Color.FromArgb(45, 45, 52);
+                copyHwidButton.Font = new Font("Arial", 8F, FontStyle.Bold);
+                copyHwidButton.Cursor = Cursors.Hand;
+                copyHwidButton.Click += (s, e) => {
+                    try {
+                        Clipboard.SetText(hwidTextBox.Text);
+                        copyHwidButton.Text = "Copied!";
+                        System.Windows.Forms.Timer resetTimer = new System.Windows.Forms.Timer();
+                        resetTimer.Interval = 2000;
+                        resetTimer.Tick += (sender_t, e_t) => {
+                            copyHwidButton.Text = "Copy";
+                            resetTimer.Stop();
+                            resetTimer.Dispose();
+                        };
+                        resetTimer.Start();
+                    } catch {}
+                };
+                contentPanel.Controls.Add(copyHwidButton);
+
+                // Deactivation Key Section
+                keyLabel = new Label();
+                keyLabel.Text = "DEACTIVATION KEY:";
+                keyLabel.Font = new Font("Arial", 8.5F, FontStyle.Bold);
+                keyLabel.ForeColor = Color.FromArgb(142, 142, 147);
+                keyLabel.Size = new Size(150, 20);
+                keyLabel.Location = new Point(0, 115);
+                contentPanel.Controls.Add(keyLabel);
+
+                keyTextBox = new TextBox();
+                keyTextBox.BackColor = Color.FromArgb(20, 20, 24);
+                keyTextBox.ForeColor = Color.White;
+                keyTextBox.BorderStyle = BorderStyle.FixedSingle;
+                keyTextBox.Font = new Font("Consolas", 10F, FontStyle.Bold);
+                keyTextBox.Size = new Size(245, 25);
+                keyTextBox.Location = new Point(140, 112);
+                contentPanel.Controls.Add(keyTextBox);
+
+                // Status message
+                uninstallStatusLabel = new Label();
+                uninstallStatusLabel.Text = "";
+                uninstallStatusLabel.Font = new Font("Arial", 9F, FontStyle.Bold);
+                uninstallStatusLabel.ForeColor = Color.FromArgb(239, 68, 68); // Red
+                uninstallStatusLabel.Size = new Size(contentPanel.Width - 10, 20);
+                uninstallStatusLabel.Location = new Point(140, 145);
+                contentPanel.Controls.Add(uninstallStatusLabel);
+            }
+            else if (currentStep == 7)
+            {
+                backButton.Visible = false;
+                nextButton.Text = "Complete";
+                nextButton.Width = 130;
+                nextButton.Location = new Point(this.Width - 160, this.Height - 65);
+
+                uninstallLabel = new Label();
+                uninstallLabel.Text = "Zenith Suite Deactivated!";
+                uninstallLabel.Font = new Font("Arial", 14F, FontStyle.Bold);
+                uninstallLabel.ForeColor = Color.FromArgb(5, 150, 105); // Green
+                uninstallLabel.Size = new Size(contentPanel.Width, 30);
+                uninstallLabel.Location = new Point(0, 5);
+                contentPanel.Controls.Add(uninstallLabel);
+
+                Label successDesc = new Label();
+                if (uninstallFilesCleaned)
+                {
+                    successDesc.Text = "All background guard shields have been terminated, and local files and shortcuts have been successfully deleted from your computer.\n\nClick 'Complete' to exit this setup wizard.";
+                }
+                else
+                {
+                    successDesc.Text = "Background guard shields have been successfully terminated.\n\nSome local files could not be deleted automatically (possibly locked by open browser profiles). You can safely delete them manually at your installation path:\n\n" + installPath + "\n\nClick 'Complete' to exit this setup wizard.";
+                }
+                successDesc.Font = new Font("Arial", 9.5F);
+                successDesc.ForeColor = Color.FromArgb(142, 142, 147);
+                successDesc.Size = new Size(contentPanel.Width - 10, 120);
+                successDesc.Location = new Point(0, 45);
+                contentPanel.Controls.Add(successDesc);
+            }
         }
 
         private void BrowseButton_Click(object sender, EventArgs e)
@@ -522,7 +736,15 @@ namespace ZenithInstaller
 
         private void NextButton_Click(object sender, EventArgs e)
         {
-            if (currentStep < 5)
+            if (currentStep == 6)
+            {
+                ExecuteUninstall();
+            }
+            else if (currentStep == 7)
+            {
+                this.Close();
+            }
+            else if (currentStep < 5)
             {
                 ShowStep(currentStep + 1);
             }
@@ -544,6 +766,97 @@ namespace ZenithInstaller
                 }
                 this.Close();
             }
+        }
+
+        private void ExecuteUninstall()
+        {
+            string hwid = hwidTextBox.Text;
+            string key = keyTextBox.Text;
+
+            if (!ValidateDeactivationKey(hwid, key))
+            {
+                uninstallStatusLabel.ForeColor = Color.FromArgb(239, 68, 68); // Red
+                uninstallStatusLabel.Text = "Invalid Deactivation Key. Please verify and try again.";
+                return;
+            }
+
+            uninstallStatusLabel.ForeColor = Color.FromArgb(5, 150, 105); // Green
+            uninstallStatusLabel.Text = "Key validated! Deactivating watchdog...";
+            this.Update();
+
+            try
+            {
+                // 1. Stop background processes (shield and watchdog) simultaneously
+                ProcessStartInfo taskkillInfo = new ProcessStartInfo("taskkill", "/f /im zenith-shield.exe");
+                taskkillInfo.CreateNoWindow = true;
+                taskkillInfo.UseShellExecute = false;
+                taskkillInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                
+                using (Process p = Process.Start(taskkillInfo))
+                {
+                    p.WaitForExit(3000);
+                }
+                
+                Thread.Sleep(800); // Wait for file locks to release
+            }
+            catch {}
+
+            // 2. Perform cleanup of files and shortcuts
+            uninstallFilesCleaned = true;
+            try
+            {
+                // Delete Desktop Shortcut
+                string desktopFolder = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                string desktopLnk = Path.Combine(desktopFolder, "Zenith.lnk");
+                if (File.Exists(desktopLnk))
+                {
+                    File.Delete(desktopLnk);
+                }
+
+                // Delete Startup Shortcut
+                string startupFolder = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+                string startupLnk = Path.Combine(startupFolder, "ZenithShield.lnk");
+                if (File.Exists(startupLnk))
+                {
+                    File.Delete(startupLnk);
+                }
+
+                // Delete directory files
+                if (Directory.Exists(installPath))
+                {
+                    foreach (string file in Directory.GetFiles(installPath, "*.*", SearchOption.AllDirectories))
+                    {
+                        try
+                        {
+                            File.Delete(file);
+                        }
+                        catch
+                        {
+                            uninstallFilesCleaned = false;
+                        }
+                    }
+                    foreach (string dir in Directory.GetDirectories(installPath, "*", SearchOption.AllDirectories))
+                    {
+                        try
+                        {
+                            Directory.Delete(dir, true);
+                        }
+                        catch {}
+                    }
+                    try
+                    {
+                        Directory.Delete(installPath, true);
+                    }
+                    catch {}
+                }
+            }
+            catch
+            {
+                uninstallFilesCleaned = false;
+            }
+
+            // 3. Show Success Screen
+            ShowStep(7);
         }
 
         private void InstallTimer_Tick(object sender, EventArgs e)
