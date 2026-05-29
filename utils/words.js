@@ -107,13 +107,7 @@ const ZenithDictionary = {
     '/nsfw/',
     '/hentai/',
     '/xxx/',
-    '/erotica/',
-    'localhost:7860',
-    '127.0.0.1:7860',
-    'localhost:8188',
-    '127.0.0.1:8188',
-    'localhost:5000',
-    '127.0.0.1:5000'
+    '/erotica/'
   ]
 };
 

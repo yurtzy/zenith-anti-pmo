@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Close modal clicking outside the card
   if (modal) {
     modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.classList.remove('open'));
+      if (e.target === modal) modal.classList.remove('open');
     });
   }
 

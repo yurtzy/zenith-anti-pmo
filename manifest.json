@@ -20,6 +20,21 @@
     }
   },
   "options_page": "dashboard/dashboard.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:7860/*",
+        "http://127.0.0.1:7860/*",
+        "http://localhost:8188/*",
+        "http://127.0.0.1:8188/*",
+        "http://localhost:5000/*",
+        "http://127.0.0.1:5000/*"
+      ],
+      "js": ["utils/words.js", "prompt_guard.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

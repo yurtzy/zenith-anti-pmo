@@ -9,6 +9,11 @@ namespace ZenithShield
     {
         private const string ExtensionId = "bonebkgnmbaongbgjfalllepkbkahhda";
 
+        [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
+        private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        private const uint WM_CLOSE = 0x0010;
+
         // Trigger words to monitor in window titles
         private static readonly string[] Triggers = new string[]
         {
@@ -211,7 +216,7 @@ namespace ZenithShield
                     string processName = process.ProcessName.ToLower();
 
                     if (processName == "idle" || processName == "system" || 
-                        processName == "chrome" || processName == "zenith-shield")
+                        processName == "zenith-shield")
                     {
                         continue;
                     }
@@ -233,12 +238,25 @@ namespace ZenithShield
                         }
                     }
 
+                    bool isChrome = processName == "chrome";
+
                     foreach (string trigger in Triggers)
                     {
                         if ((isNonProtectedBrowser && windowTitle.Contains(trigger)) || 
-                            (!isNonProtectedBrowser && IsExplicitMatch(windowTitle, trigger)))
+                            (isChrome && windowTitle.Contains(trigger)) ||
+                            (!isNonProtectedBrowser && !isChrome && IsExplicitMatch(windowTitle, trigger)))
                         {
-                            process.Kill();
+                            if (isChrome)
+                            {
+                                if (process.MainWindowHandle != IntPtr.Zero)
+                                {
+                                    PostMessage(process.MainWindowHandle, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+                                }
+                            }
+                            else
+                            {
+                                process.Kill();
+                            }
                             LaunchZenithIntervention(trigger, processName);
                             break;
                         }
