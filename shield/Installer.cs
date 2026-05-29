@@ -605,7 +605,7 @@ namespace ZenithInstaller
                 contentPanel.Controls.Add(uninstallLabel);
 
                 uninstallDesc = new Label();
-                uninstallDesc.Text = "Enter your Deactivation Key to remove Zenith. To obtain a key, send your Hardware ID below to zenith.suite.help@gmail.com.";
+                uninstallDesc.Text = "Enter your Deactivation Key to remove Zenith. To obtain a key, send your Hardware ID below to zenith.suite.help@outlook.com.";
                 uninstallDesc.Font = new Font("Arial", 9F);
                 uninstallDesc.ForeColor = Color.FromArgb(142, 142, 147);
                 uninstallDesc.Size = new Size(contentPanel.Width - 10, 35);

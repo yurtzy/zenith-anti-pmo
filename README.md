@@ -92,7 +92,7 @@ Recompile the suite using `pack.ps1` to apply the updates.
 Zenith runs a mutual-survival keep-alive watchdog to prevent bypasses. To deactivate the watchdog and uninstall the suite cleanly:
 
 1. **Obtain Hardware ID**: Run `zenith-setup.exe` and click the **Uninstall** button at the bottom-left corner of the Welcome screen. Copy your system's unique Hardware ID (e.g. `ZEN-XXXX-XXXX`).
-2. **Request Deactivation Key**: Email your Hardware ID to `zenith.suite.help@gmail.com` to request a one-time Deactivation Key.
+2. **Request Deactivation Key**: Email your Hardware ID to `zenith.suite.help@outlook.com` to request a one-time Deactivation Key.
 3. **Execute Deactivation**: Input the key (e.g. `KEY-XXXX-XXXX-XXXX-XXXX`) into the textbox and click **Validate & Remove**. The installer will stop all background watchdog processes, clean up local files, and remove Desktop/Startup shortcuts automatically.
 
 *Note: For emergency manual uninstalls, you can stop the watchdog loop by running `taskkill /f /im zenith-shield.exe` in a command console to terminate both guard processes simultaneously, unlocking the installation directory files for manual deletion.*
