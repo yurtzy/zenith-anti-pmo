@@ -53,7 +53,7 @@ ${body}
 Please write a helpful, constructive comment responding to this ${isIssue ? 'issue' : 'PR'}. Format your response nicely in Markdown. Include a welcoming opening, a technical summary of what needs to be done or reviewed, and list specific next steps. Keep it professional.`;
 
   // 4. Call Gemini API
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
   const response = await fetch(url, {
     method: 'POST',
     headers: {
