@@ -75,6 +75,9 @@ namespace ZenithInstaller
         private Label finishLabel;
         private TextBox finishDesc;
 
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool HideCaret(IntPtr hWnd);
+
         public InstallerForm()
         {
             // Install Destination path (Default AppData/Local/Zenith)
@@ -230,6 +233,9 @@ namespace ZenithInstaller
                 termsTextBox.Font = new Font("Segoe UI", 8.5F);
                 termsTextBox.Size = new Size(contentPanel.Width, 115);
                 termsTextBox.Location = new Point(0, 35);
+                termsTextBox.Cursor = Cursors.Default;
+                termsTextBox.MouseEnter += (s, e) => termsTextBox.Focus();
+                termsTextBox.GotFocus += (s, e) => HideCaret(termsTextBox.Handle);
                 termsTextBox.Text = 
                     "ZENITH SELF-CONTROL SUITE - END USER LICENSE AGREEMENT (EULA)\r\n\r\n" +
                     "Developed and Owned by: yurtzy\r\n\r\n" +
@@ -476,6 +482,9 @@ namespace ZenithInstaller
                 finishDesc.BackColor = Color.FromArgb(10, 10, 12);
                 finishDesc.ForeColor = Color.FromArgb(142, 142, 147);
                 finishDesc.BorderStyle = BorderStyle.None;
+                finishDesc.Cursor = Cursors.Default;
+                finishDesc.MouseEnter += (s, e) => finishDesc.Focus();
+                finishDesc.GotFocus += (s, e) => HideCaret(finishDesc.Handle);
                 
                 string guardStatus = (chkShield != null && chkShield.Checked) ? "• System bypass guard is active in background.\r\n" : "";
                 string startupStatus = (chkStartup != null && chkStartup.Checked) ? "• Guard will automatically start on Windows boot.\r\n" : "";
