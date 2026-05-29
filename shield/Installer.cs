@@ -960,51 +960,64 @@ namespace ZenithInstaller
             try
             {
                 string sourceDir = AppDomain.CurrentDomain.BaseDirectory;
-                
-                // Copy directory structure recursively
-                foreach (string dirPath in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+
+                // 1. Copy core executables (only those requested)
+                string[] coreExes = new string[] { "zenith-shield.exe", "zenith-app.exe" };
+                foreach (string exe in coreExes)
                 {
-                    string relativePath = dirPath.Substring(sourceDir.Length).TrimStart('\\', '/');
-                    
-                    // Skip source files, git controls, or compilation helper folders
-                    if (relativePath.StartsWith("shield") || relativePath.StartsWith(".git"))
+                    string srcPath = Path.Combine(sourceDir, exe);
+                    if (File.Exists(srcPath))
                     {
-                        continue;
+                        if (exe == "zenith-shield.exe" && (chkShield == null || !chkShield.Checked)) continue;
+                        if (exe == "zenith-app.exe" && (chkApp == null || !chkApp.Checked)) continue;
+                        
+                        string destPath = Path.Combine(installPath, exe);
+                        File.Copy(srcPath, destPath, true);
                     }
-                    Directory.CreateDirectory(Path.Combine(installPath, relativePath));
                 }
 
-                // Copy all selected files
-                foreach (string filePath in Directory.GetFiles(sourceDir, "*.*", SearchOption.AllDirectories))
+                // 2. Recursively copy ONLY the extension subfolder
+                string srcExtensionDir = Path.Combine(sourceDir, "extension");
+                if (Directory.Exists(srcExtensionDir))
                 {
-                    string relativePath = filePath.Substring(sourceDir.Length).TrimStart('\\', '/');
-                    string fileName = Path.GetFileName(filePath).ToLower();
-
-                    // Filter shield source directories and setup installer files
-                    if (relativePath.StartsWith("shield") || relativePath.StartsWith(".git") || 
-                        fileName == "create_shortcut.vbs" || fileName == "zenith-setup.exe")
-                    {
-                        continue;
-                    }
-
-                    // Filter components based on user's feature choices
-                    if (fileName == "zenith-shield.exe" && (chkShield == null || !chkShield.Checked))
-                    {
-                        continue;
-                    }
-                    if (fileName == "zenith-app.exe" && (chkApp == null || !chkApp.Checked))
-                    {
-                        continue;
-                    }
-
-                    string destPath = Path.Combine(installPath, relativePath);
-                    File.Copy(filePath, destPath, true);
+                    string destExtensionDir = Path.Combine(installPath, "extension");
+                    CopyDirectoryRecursively(srcExtensionDir, destExtensionDir);
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Warning copying files: " + ex.Message, "Zenith Setup", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+        }
+
+        private void CopyDirectoryRecursively(string sourceDir, string destDir)
+        {
+            try
+            {
+                if (!Directory.Exists(destDir))
+                {
+                    Directory.CreateDirectory(destDir);
+                }
+
+                // Copy all files in the current folder level
+                foreach (string file in Directory.GetFiles(sourceDir))
+                {
+                    string destFile = Path.Combine(destDir, Path.GetFileName(file));
+                    File.Copy(file, destFile, true);
+                }
+
+                // Recurse into subfolders
+                foreach (string folder in Directory.GetDirectories(sourceDir))
+                {
+                    string folderName = Path.GetFileName(folder);
+                    // Prevent infinite loops or copying git controls just in case
+                    if (folderName.Equals(".git", StringComparison.OrdinalIgnoreCase)) continue;
+                    
+                    string destFolder = Path.Combine(destDir, folderName);
+                    CopyDirectoryRecursively(folder, destFolder);
+                }
+            }
+            catch {}
         }
 
         private void CreateDesktopShortcut()
