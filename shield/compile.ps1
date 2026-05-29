@@ -55,3 +55,48 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 Write-Host "`nAll Zenith C# components compiled natively and stored in bin directory successfully." -ForegroundColor Green
+
+# --- AUTOMATIC FREE LOCAL CODE SIGNING ---
+Write-Host "`n3. Running Local Code Signing (Free Verification)..." -ForegroundColor Cyan
+
+try {
+    # Check if a certificate for Zenith Focus Suite already exists
+    $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -like "*CN=Zenith Focus Suite*" } | Select-Object -First 1
+    
+    if (-not $cert) {
+        Write-Host "Generating a new self-signed Code Signing Certificate..." -ForegroundColor Yellow
+        $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=Zenith Focus Suite" -FriendlyName "Zenith Local Code Sign" -CertStoreLocation "Cert:\CurrentUser\My"
+        
+        # Install to CurrentUser Root Store (Trusted Root Certification Authorities)
+        $rootStore = New-Object System.Security.Cryptography.X509Certificates.X509Store("Root", "CurrentUser")
+        $rootStore.Open("ReadWrite")
+        $rootStore.Add($cert)
+        $rootStore.Close()
+        
+        # Install to CurrentUser TrustedPublisher Store (removes "untrusted publisher" warning)
+        $pubStore = New-Object System.Security.Cryptography.X509Certificates.X509Store("TrustedPublisher", "CurrentUser")
+        $pubStore.Open("ReadWrite")
+        $pubStore.Add($cert)
+        $pubStore.Close()
+        
+        Write-Host "Successfully generated and trusted certificate: CN=Zenith Focus Suite" -ForegroundColor Green
+    } else {
+        Write-Host "Found existing local certificate: CN=Zenith Focus Suite" -ForegroundColor Gray
+    }
+
+    # Sign compiled executables natively
+    $binaries = @($shieldOutput, $appOutput, $installerOutput)
+    foreach ($bin in $binaries) {
+        if (Test-Path $bin) {
+            $binName = Split-Path $bin -Leaf
+            Write-Host "Signing $binName..." -ForegroundColor Cyan
+            Set-AuthenticodeSignature -FilePath $bin -Certificate $cert | Out-Null
+            Write-Host "Successfully signed $binName!" -ForegroundColor Green
+        }
+    }
+    Write-Host "`n[SUCCESS] Code-signing completed. All binaries are now locally trusted." -ForegroundColor Green
+} catch {
+    Write-Host "`n[WARNING] Local code-signing encountered an issue: $_" -ForegroundColor Yellow
+    Write-Host "The application will still function, but you may see a Defender warning on launch." -ForegroundColor Yellow
+}
+

@@ -9,6 +9,42 @@ Write-Host "1. Running C# Compilation..." -ForegroundColor Cyan
 Set-Location $PSScriptRoot
 .\compile.ps1
 
+Write-Host "`n1.5. Local Code Signing (Free Self-Signed Certificate)..." -ForegroundColor Cyan
+$certSubject = "CN=Zenith Focus Suite"
+$cert = Get-ChildItem "Cert:\CurrentUser\My" | Where-Object { $_.Subject -eq $certSubject } | Select-Object -First 1
+
+if (-not $cert) {
+    Write-Host " -> Generating new self-signed certificate for '$certSubject'..." -ForegroundColor Yellow
+    $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject $certSubject -KeyUsage DigitalSignature -FriendlyName "Zenith Code Sign" -CertStoreLocation "Cert:\CurrentUser\My"
+    
+    # Trust the certificate locally so SmartScreen on THIS machine won't complain
+    $rootStore = New-Object System.Security.Cryptography.X509Certificates.X509Store "Root", "CurrentUser"
+    $rootStore.Open("ReadWrite")
+    $rootStore.Add($cert)
+    $rootStore.Close()
+    
+    $publisherStore = New-Object System.Security.Cryptography.X509Certificates.X509Store "TrustedPublisher", "CurrentUser"
+    $publisherStore.Open("ReadWrite")
+    $publisherStore.Add($cert)
+    $publisherStore.Close()
+} else {
+    Write-Host " -> Found existing certificate for '$certSubject'." -ForegroundColor Green
+}
+
+Write-Host " -> Signing C# Executables..." -ForegroundColor Cyan
+$exesToSign = @(
+    Join-Path $rootDir "bin\zenith-setup.exe",
+    Join-Path $rootDir "bin\zenith-shield.exe",
+    Join-Path $rootDir "bin\zenith-app.exe"
+)
+
+foreach ($exe in $exesToSign) {
+    if (Test-Path $exe) {
+        Set-AuthenticodeSignature -FilePath $exe -Certificate $cert -HashAlgorithm SHA256 | Out-Null
+        Write-Host "    Signed: $(Split-Path $exe -Leaf)" -ForegroundColor Gray
+    }
+}
+
 Write-Host "`n2. Packaging ZIP archive for distribution..." -ForegroundColor Cyan
 
 # Ensure the destination directory exists
