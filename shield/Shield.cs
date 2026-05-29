@@ -62,6 +62,40 @@ namespace ZenithShield
             }
         }
 
+        private static System.Collections.Generic.List<FileStream> lockedStreams = new System.Collections.Generic.List<FileStream>();
+
+        private static void LockCriticalFiles(string installPath)
+        {
+            try
+            {
+                string[] filesToLock = new string[]
+                {
+                    Path.Combine(installPath, "zenith-shield.exe"),
+                    Path.Combine(installPath, "zenith-app.exe"),
+                    Path.Combine(installPath, "extension", "manifest.json"),
+                    Path.Combine(installPath, "extension", "background.js")
+                };
+
+                foreach (string file in filesToLock)
+                {
+                    try
+                    {
+                        if (File.Exists(file))
+                        {
+                            // Open stream with Read-only access, sharing only Read (prevents Delete or Write)
+                            FileStream fs = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+                            lockedStreams.Add(fs);
+                        }
+                    }
+                    catch
+                    {
+                        // Safe ignore if locked or not exists
+                    }
+                }
+            }
+            catch {}
+        }
+
         private static void RunMainSingle()
         {
             // Prevent multiple main instances running concurrently
@@ -72,6 +106,10 @@ namespace ZenithShield
                 {
                     return; // Already running
                 }
+
+                string currentExe = Process.GetCurrentProcess().MainModule.FileName;
+                string currentDir = Path.GetDirectoryName(currentExe);
+                LockCriticalFiles(currentDir);
 
                 while (true)
                 {
@@ -98,6 +136,9 @@ namespace ZenithShield
                 {
                     return; // Main is already running
                 }
+
+                string currentDir = Path.GetDirectoryName(currentExe);
+                LockCriticalFiles(currentDir);
 
                 Process watchdogProcess = null;
 
@@ -145,6 +186,7 @@ namespace ZenithShield
 
                 string currentExe = Process.GetCurrentProcess().MainModule.FileName;
                 string currentDir = Path.GetDirectoryName(currentExe);
+                LockCriticalFiles(currentDir);
 
                 // Watchdog loop (rapid check to instantly resurrect main if Task Manager kills it)
                 while (true)

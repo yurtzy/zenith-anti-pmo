@@ -5,6 +5,9 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.Threading;
 using System.Reflection;
+using System.Security.AccessControl;
+using System.Security.Principal;
+using Microsoft.Win32;
 
 [assembly: AssemblyTitle("Zenith Setup Installer")]
 [assembly: AssemblyDescription("Zenith Self-Control Suite Setup Wizard")]
@@ -577,12 +580,12 @@ namespace ZenithInstaller
                 string desktopStatus = (chkDesktop != null && chkDesktop.Checked) ? "• Standalone desktop shortcut generated.\r\n" : "";
 
                 finishDesc.Text = guardStatus + startupStatus + watchdogStatus + desktopStatus +
-                                  "• Extension directory path copied to your clipboard.\r\n" +
-                                  "• Google Chrome opened automatically.\r\n\r\n" +
+                                  "• Folder security & dynamic deletion protection enabled.\r\n" +
+                                  "• Browser extension automatically registered!\r\n\r\n" +
                                   "Required Actions to complete integration:\r\n" +
-                                  "1. In Chrome, click 'Load unpacked' (Developer Mode enabled).\r\n" +
-                                  "2. Press Ctrl+V to paste the path, and click Select Folder.\r\n" +
-                                  "3. Enable 'Allow in incognito' in extensions Details.";
+                                  "1. Google Chrome (or Edge) has been launched.\r\n" +
+                                  "2. Click \"Enable extension\" when prompted by your browser.\r\n" +
+                                  "3. Enable \"Allow in incognito\" in extension details to ensure full protection.";
                                   
                 finishDesc.Font = new Font("Arial", 9F);
                 finishDesc.Size = new Size(contentPanel.Width - 10, 150);
@@ -803,6 +806,8 @@ namespace ZenithInstaller
 
             // 2. Perform cleanup of files and shortcuts
             uninstallFilesCleaned = true;
+            UnprotectFolder(installPath);
+            UnregisterExternalExtensions();
             try
             {
                 // Delete Desktop Shortcut
@@ -918,6 +923,10 @@ namespace ZenithInstaller
             else
             {
                 installTimer.Stop();
+
+                // Apply dynamic folder protection and register browser external extensions
+                RegisterExternalExtensions(installPath);
+                ProtectFolder(installPath);
 
                 // 1. Activate background Shield process if selected
                 if (chkShield != null && chkShield.Checked)
@@ -1102,9 +1111,130 @@ namespace ZenithInstaller
         {
             try
             {
-                Process.Start("chrome.exe", "chrome://extensions");
+                Process.Start("chrome.exe");
             }
-            catch {}
+            catch 
+            {
+                try
+                {
+                    Process.Start("msedge.exe");
+                }
+                catch {}
+            }
+        }
+
+        private void ProtectFolder(string path)
+        {
+            try
+            {
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                DirectoryInfo dInfo = new DirectoryInfo(path);
+                DirectorySecurity dSecurity = dInfo.GetAccessControl();
+
+                SecurityIdentifier currentUser = WindowsIdentity.GetCurrent().User;
+
+                // Create a deny rule for delete and delete subdirectories and files
+                FileSystemAccessRule denyDelete = new FileSystemAccessRule(
+                    currentUser,
+                    FileSystemRights.Delete | FileSystemRights.DeleteSubdirectoriesAndFiles,
+                    InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                    PropagationFlags.None,
+                    AccessControlType.Deny
+                );
+
+                dSecurity.AddAccessRule(denyDelete);
+                dInfo.SetAccessControl(dSecurity);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Folder protect error: " + ex.Message);
+            }
+        }
+
+        private void UnprotectFolder(string path)
+        {
+            try
+            {
+                if (Directory.Exists(path))
+                {
+                    DirectoryInfo dInfo = new DirectoryInfo(path);
+                    DirectorySecurity dSecurity = dInfo.GetAccessControl();
+                    SecurityIdentifier currentUser = WindowsIdentity.GetCurrent().User;
+
+                    // Remove all Deny Delete rules for current user
+                    AuthorizationRuleCollection rules = dSecurity.GetAccessRules(true, false, typeof(SecurityIdentifier));
+                    foreach (FileSystemAccessRule rule in rules)
+                    {
+                        if (rule.AccessControlType == AccessControlType.Deny && rule.IdentityReference == currentUser)
+                        {
+                            if ((rule.FileSystemRights & FileSystemRights.Delete) != 0 || 
+                                (rule.FileSystemRights & FileSystemRights.DeleteSubdirectoriesAndFiles) != 0)
+                            {
+                                dSecurity.RemoveAccessRuleSpecific(rule);
+                            }
+                        }
+                    }
+                    dInfo.SetAccessControl(dSecurity);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Folder unprotect error: " + ex.Message);
+            }
+        }
+
+        private void RegisterExternalExtensions(string path)
+        {
+            try
+            {
+                string extensionPath = Path.Combine(path, "extension");
+                if (Directory.Exists(extensionPath))
+                {
+                    // Register for Chrome
+                    using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Google\Chrome\Extensions\bonebkgnmbaongbgjfalllepkbkahhda"))
+                    {
+                        if (key != null)
+                        {
+                            key.SetValue("path", extensionPath);
+                            key.SetValue("version", "1.5.0");
+                        }
+                    }
+
+                    // Register for Edge
+                    using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Edge\Extensions\bonebkgnmbaongbgjfalllepkbkahhda"))
+                    {
+                        if (key != null)
+                        {
+                            key.SetValue("path", extensionPath);
+                            key.SetValue("version", "1.5.0");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Registry registration error: " + ex.Message);
+            }
+        }
+
+        private void UnregisterExternalExtensions()
+        {
+            try
+            {
+                // Delete Chrome extension key
+                Registry.CurrentUser.DeleteSubKeyTree(@"Software\Google\Chrome\Extensions\bonebkgnmbaongbgjfalllepkbkahhda", false);
+
+                // Delete Edge extension key
+                Registry.CurrentUser.DeleteSubKeyTree(@"Software\Microsoft\Edge\Extensions\bonebkgnmbaongbgjfalllepkbkahhda", false);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Registry unregistration error: " + ex.Message);
+            }
         }
     }
 }
