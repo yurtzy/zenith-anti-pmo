@@ -1,5 +1,14 @@
 using System;
 using System.Diagnostics;
+using System.Reflection;
+
+[assembly: AssemblyTitle("Zenith App Launcher")]
+[assembly: AssemblyDescription("Zenith Overview Dashboard App Shell")]
+[assembly: AssemblyCompany("yurtzy")]
+[assembly: AssemblyProduct("Zenith Focus Suite")]
+[assembly: AssemblyCopyright("Copyright © 2026 yurtzy")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
 
 namespace ZenithAppLauncher
 {

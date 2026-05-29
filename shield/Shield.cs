@@ -2,6 +2,15 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.IO;
+using System.Reflection;
+
+[assembly: AssemblyTitle("Zenith Shield Guard")]
+[assembly: AssemblyDescription("Zenith Background Self-Control Guard")]
+[assembly: AssemblyCompany("yurtzy")]
+[assembly: AssemblyProduct("Zenith Focus Suite")]
+[assembly: AssemblyCopyright("Copyright © 2026 yurtzy")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
 
 namespace ZenithShield
 {

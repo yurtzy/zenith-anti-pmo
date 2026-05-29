@@ -4,6 +4,15 @@ using System.IO;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Threading;
+using System.Reflection;
+
+[assembly: AssemblyTitle("Zenith Setup Installer")]
+[assembly: AssemblyDescription("Zenith Self-Control Suite Setup Wizard")]
+[assembly: AssemblyCompany("yurtzy")]
+[assembly: AssemblyProduct("Zenith Focus Suite")]
+[assembly: AssemblyCopyright("Copyright © 2026 yurtzy")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
 
 namespace ZenithInstaller
 {
@@ -36,6 +45,11 @@ namespace ZenithInstaller
         // Step 1: Welcome Controls
         private Label welcomeLabel;
         private Label welcomeDesc;
+
+        // Step 1b: Terms Controls
+        private Label termsLabel;
+        private TextBox termsTextBox;
+        private CheckBox chkAgreeTerms;
 
         // Step 2: Path Controls
         private Label pathLabel;
@@ -173,6 +187,7 @@ namespace ZenithInstaller
                 // Step 0: Welcome screen
                 backButton.Visible = false;
                 nextButton.Text = "Next";
+                nextButton.Enabled = true;
 
                 welcomeLabel = new Label();
                 welcomeLabel.Text = "Break the Compulsion Cycle.";
@@ -192,9 +207,65 @@ namespace ZenithInstaller
             }
             else if (currentStep == 1)
             {
-                // Step 1: Destination location selection (Editable + Browse Button)
+                // Step 1: License Agreement / EULA
+                backButton.Visible = true;
+                nextButton.Text = "Accept & Next";
+                nextButton.Enabled = chkAgreeTerms != null && chkAgreeTerms.Checked;
+
+                termsLabel = new Label();
+                termsLabel.Text = "License Agreement & Terms";
+                termsLabel.Font = new Font("Arial", 13F, FontStyle.Bold);
+                termsLabel.ForeColor = Color.White;
+                termsLabel.Size = new Size(contentPanel.Width, 25);
+                termsLabel.Location = new Point(0, 5);
+                contentPanel.Controls.Add(termsLabel);
+
+                termsTextBox = new TextBox();
+                termsTextBox.Multiline = true;
+                termsTextBox.ScrollBars = ScrollBars.Vertical;
+                termsTextBox.ReadOnly = true;
+                termsTextBox.BackColor = Color.FromArgb(15, 15, 18);
+                termsTextBox.ForeColor = Color.FromArgb(200, 200, 200);
+                termsTextBox.BorderStyle = BorderStyle.FixedSingle;
+                termsTextBox.Font = new Font("Segoe UI", 8.5F);
+                termsTextBox.Size = new Size(contentPanel.Width, 115);
+                termsTextBox.Location = new Point(0, 35);
+                termsTextBox.Text = 
+                    "ZENITH SELF-CONTROL SUITE - END USER LICENSE AGREEMENT (EULA)\r\n\r\n" +
+                    "Developed and Owned by: yurtzy\r\n\r\n" +
+                    "1. ACCEPTANCE OF TERMS\r\n" +
+                    "By installing and using the Zenith Suite, you agree to be bound by these terms. If you do not agree, cancel this installation.\r\n\r\n" +
+                    "2. DESCRIPTION OF SERVICE\r\n" +
+                    "Zenith is a productivity tool consisting of a Chrome extension and a native background service (zenith-shield.exe) to help prevent access to adult content and distracting websites/apps.\r\n\r\n" +
+                    "3. BACKGROUND SHIELD & KEEP-ALIVE WATCHDOG\r\n" +
+                    "The system-wide Guard operates in the background to monitor active window titles. If the 'Watchdog Keep-Alive' component is enabled, Zenith will run mutual-survival watchdog processes that prevent the background shield from being terminated via Task Manager. You acknowledge that this behavior is intentional to prevent digital compulsion.\r\n\r\n" +
+                    "4. DISCLAIMER OF WARRANTY\r\n" +
+                    "This software is provided 'as is' without warranty of any kind. The developer (yurtzy) is not liable for any system redirect errors, process terminations, or other issues resulting from the use of this software.\r\n\r\n" +
+                    "5. PRIVACY POLICY\r\n" +
+                    "All title scanning and blocking processes are performed entirely locally on your machine. No web traffic data, browsing history, or personal identifiers are uploaded or transmitted to any external servers.";
+                contentPanel.Controls.Add(termsTextBox);
+
+                if (chkAgreeTerms == null)
+                {
+                    chkAgreeTerms = new CheckBox();
+                    chkAgreeTerms.Text = "I accept the Terms and Conditions of this Agreement";
+                    chkAgreeTerms.ForeColor = Color.White;
+                    chkAgreeTerms.FlatStyle = FlatStyle.Flat;
+                    chkAgreeTerms.Font = new Font("Arial", 9F, FontStyle.Bold);
+                    chkAgreeTerms.Size = new Size(contentPanel.Width, 22);
+                    chkAgreeTerms.CheckedChanged += (s, e) => {
+                        nextButton.Enabled = chkAgreeTerms.Checked;
+                    };
+                }
+                chkAgreeTerms.Location = new Point(5, 160);
+                contentPanel.Controls.Add(chkAgreeTerms);
+            }
+            else if (currentStep == 2)
+            {
+                // Step 2: Destination location selection (Editable + Browse Button)
                 backButton.Visible = true;
                 nextButton.Text = "Next";
+                nextButton.Enabled = true;
 
                 pathLabel = new Label();
                 pathLabel.Text = "Choose Install Location";
@@ -238,11 +309,12 @@ namespace ZenithInstaller
                 browseButton.Click += BrowseButton_Click;
                 contentPanel.Controls.Add(browseButton);
             }
-            else if (currentStep == 2)
+            else if (currentStep == 3)
             {
-                // Step 2: Feature Customization Options (Checkboxes)
+                // Step 3: Feature Customization Options (Checkboxes with state retention)
                 backButton.Visible = true;
                 nextButton.Text = "Install";
+                nextButton.Enabled = true;
 
                 featureLabel = new Label();
                 featureLabel.Text = "Customize Components";
@@ -252,82 +324,95 @@ namespace ZenithInstaller
                 featureLabel.Location = new Point(0, 5);
                 contentPanel.Controls.Add(featureLabel);
 
-                // Checkbox 1: System Shield
-                chkShield = new CheckBox();
-                chkShield.Text = "Install Background Shield Guard (Anti-Bypass Protection)";
-                chkShield.ForeColor = Color.White;
-                chkShield.FlatStyle = FlatStyle.Flat;
-                chkShield.Font = new Font("Arial", 9F);
-                chkShield.Size = new Size(contentPanel.Width, 22);
+                if (chkShield == null)
+                {
+                    chkShield = new CheckBox();
+                    chkShield.Text = "Install Background Shield Guard (Anti-Bypass Protection)";
+                    chkShield.ForeColor = Color.White;
+                    chkShield.FlatStyle = FlatStyle.Flat;
+                    chkShield.Font = new Font("Arial", 9F);
+                    chkShield.Size = new Size(contentPanel.Width, 22);
+                    chkShield.Checked = true;
+                    chkShield.CheckedChanged += (s, e) => {
+                        if (!chkShield.Checked)
+                        {
+                            chkStartup.Checked = false;
+                            chkStartup.Enabled = false;
+                            chkWatchdog.Checked = false;
+                            chkWatchdog.Enabled = false;
+                        }
+                        else
+                        {
+                            chkStartup.Enabled = true;
+                            chkStartup.Checked = true;
+                            chkWatchdog.Enabled = true;
+                            chkWatchdog.Checked = true;
+                        }
+                    };
+                }
                 chkShield.Location = new Point(5, 45);
-                chkShield.Checked = true;
                 contentPanel.Controls.Add(chkShield);
 
-                // Checkbox 2: Standalone Desktop App
-                chkApp = new CheckBox();
-                chkApp.Text = "Install Standalone Desktop App Launcher shell";
-                chkApp.ForeColor = Color.White;
-                chkApp.FlatStyle = FlatStyle.Flat;
-                chkApp.Font = new Font("Arial", 9F);
-                chkApp.Size = new Size(contentPanel.Width, 22);
+                if (chkApp == null)
+                {
+                    chkApp = new CheckBox();
+                    chkApp.Text = "Install Standalone Desktop App Launcher shell";
+                    chkApp.ForeColor = Color.White;
+                    chkApp.FlatStyle = FlatStyle.Flat;
+                    chkApp.Font = new Font("Arial", 9F);
+                    chkApp.Size = new Size(contentPanel.Width, 22);
+                    chkApp.Checked = true;
+                }
                 chkApp.Location = new Point(5, 75);
-                chkApp.Checked = true;
                 contentPanel.Controls.Add(chkApp);
 
-                // Checkbox 3: Desktop Shortcut
-                chkDesktop = new CheckBox();
-                chkDesktop.Text = "Create Desktop Application Shortcut link";
-                chkDesktop.ForeColor = Color.White;
-                chkDesktop.FlatStyle = FlatStyle.Flat;
-                chkDesktop.Font = new Font("Arial", 9F);
-                chkDesktop.Size = new Size(contentPanel.Width, 22);
+                if (chkDesktop == null)
+                {
+                    chkDesktop = new CheckBox();
+                    chkDesktop.Text = "Create Desktop Application Shortcut link";
+                    chkDesktop.ForeColor = Color.White;
+                    chkDesktop.FlatStyle = FlatStyle.Flat;
+                    chkDesktop.Font = new Font("Arial", 9F);
+                    chkDesktop.Size = new Size(contentPanel.Width, 22);
+                    chkDesktop.Checked = true;
+                }
                 chkDesktop.Location = new Point(5, 105);
-                chkDesktop.Checked = true;
                 contentPanel.Controls.Add(chkDesktop);
 
-                // Checkbox 4: Windows Startup
-                chkStartup = new CheckBox();
-                chkStartup.Text = "Automatically start background Guard on Windows boot";
-                chkStartup.ForeColor = Color.White;
-                chkStartup.FlatStyle = FlatStyle.Flat;
-                chkStartup.Font = new Font("Arial", 9F);
-                chkStartup.Size = new Size(contentPanel.Width, 22);
+                if (chkStartup == null)
+                {
+                    chkStartup = new CheckBox();
+                    chkStartup.Text = "Automatically start background Guard on Windows boot";
+                    chkStartup.ForeColor = Color.White;
+                    chkStartup.FlatStyle = FlatStyle.Flat;
+                    chkStartup.Font = new Font("Arial", 9F);
+                    chkStartup.Size = new Size(contentPanel.Width, 22);
+                    chkStartup.Checked = true;
+                }
                 chkStartup.Location = new Point(5, 135);
-                chkStartup.Checked = true;
+                chkStartup.Checked = chkShield.Checked && chkStartup.Checked;
+                chkStartup.Enabled = chkShield.Checked;
+                chkStartup.Location = new Point(5, 135);
                 contentPanel.Controls.Add(chkStartup);
 
-                // Checkbox 5: Watchdog Protection
-                chkWatchdog = new CheckBox();
-                chkWatchdog.Text = "Enable Watchdog Keep-Alive (Prevents ending in Task Manager)";
-                chkWatchdog.ForeColor = Color.White;
-                chkWatchdog.FlatStyle = FlatStyle.Flat;
-                chkWatchdog.Font = new Font("Arial", 9F);
-                chkWatchdog.Size = new Size(contentPanel.Width, 22);
+                if (chkWatchdog == null)
+                {
+                    chkWatchdog = new CheckBox();
+                    chkWatchdog.Text = "Enable Watchdog Keep-Alive (Prevents ending in Task Manager)";
+                    chkWatchdog.ForeColor = Color.White;
+                    chkWatchdog.FlatStyle = FlatStyle.Flat;
+                    chkWatchdog.Font = new Font("Arial", 9F);
+                    chkWatchdog.Size = new Size(contentPanel.Width, 22);
+                    chkWatchdog.Checked = true;
+                }
+                chkWatchdog.Checked = chkShield.Checked && chkWatchdog.Checked;
+                chkWatchdog.Enabled = chkShield.Checked;
                 chkWatchdog.Location = new Point(5, 165);
-                chkWatchdog.Checked = true;
                 contentPanel.Controls.Add(chkWatchdog);
-
-                // Bind Startup & Watchdog activation option state to Shield option state
-                chkShield.CheckedChanged += (s, e) => {
-                    if (!chkShield.Checked)
-                    {
-                        chkStartup.Checked = false;
-                        chkStartup.Enabled = false;
-                        chkWatchdog.Checked = false;
-                        chkWatchdog.Enabled = false;
-                    }
-                    else
-                    {
-                        chkStartup.Enabled = true;
-                        chkStartup.Checked = true;
-                        chkWatchdog.Enabled = true;
-                        chkWatchdog.Checked = true;
-                    }
-                };
             }
-            else if (currentStep == 3)
+            else if (currentStep == 4)
             {
-                // Step 3: Installation Progressive Meter Progress Bar
+                // Step 4: Installation Progressive Meter Progress Bar
                 backButton.Visible = false;
                 nextButton.Visible = false;
 
@@ -357,9 +442,9 @@ namespace ZenithInstaller
                 installTimer.Tick += InstallTimer_Tick;
                 installTimer.Start();
             }
-            else if (currentStep == 4)
+            else if (currentStep == 5)
             {
-                // Step 4: Installation Completion screen
+                // Step 5: Installation Completion screen
                 backButton.Visible = false;
                 nextButton.Visible = true;
                 
@@ -423,7 +508,7 @@ namespace ZenithInstaller
 
         private void NextButton_Click(object sender, EventArgs e)
         {
-            if (currentStep < 4)
+            if (currentStep < 5)
             {
                 ShowStep(currentStep + 1);
             }
@@ -517,7 +602,7 @@ namespace ZenithInstaller
                 CopyExtensionPathToClipboard();
                 LaunchChromeExtensions();
 
-                ShowStep(4);
+                ShowStep(5);
             }
         }
 

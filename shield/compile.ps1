@@ -43,7 +43,7 @@ if ($LASTEXITCODE -eq 0) {
 
 # 3. Compile Zenith Setup Installer Wizard (Borderless GUI setup program)
 Write-Host "Compiling Zenith Setup Installer..." -ForegroundColor Cyan
-& $compiler /target:winexe /r:System.Windows.Forms.dll /r:System.Drawing.dll /optimize /win32icon:zenith.ico /out:"$installerOutput" "$installerSource"
+& $compiler /target:winexe /r:System.Windows.Forms.dll /r:System.Drawing.dll /optimize /win32icon:zenith.ico /win32manifest:setup.manifest /out:"$installerOutput" "$installerSource"
 
 if ($LASTEXITCODE -eq 0) {
     $size = (Get-Item $installerOutput).Length
