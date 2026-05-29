@@ -960,6 +960,21 @@ namespace ZenithInstaller
         {
             try
             {
+                // Forcefully terminate any running guard processes simultaneously (releases file locks for Repair/Upgrade)
+                try
+                {
+                    ProcessStartInfo taskkillInfo = new ProcessStartInfo("taskkill", "/f /im zenith-shield.exe");
+                    taskkillInfo.CreateNoWindow = true;
+                    taskkillInfo.UseShellExecute = false;
+                    taskkillInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    using (Process p = Process.Start(taskkillInfo))
+                    {
+                        p.WaitForExit(2000);
+                    }
+                    Thread.Sleep(600); // Allow OS to release locks
+                }
+                catch {}
+
                 string sourceDir = AppDomain.CurrentDomain.BaseDirectory;
 
                 // 1. Copy core executables (only those requested)
