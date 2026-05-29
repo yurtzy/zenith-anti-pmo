@@ -49,7 +49,7 @@
             <a href="https://buymeacoffee.com/yurtzy" target="_blank" title="Buy Me a Coffee" class="support-link link-bmc">Coffee</a>
           </div>
         </div>
-        <span class="version-tag">Version 1.0.0</span>
+        <span class="version-tag">Version 1.2.0</span>
       </div>
     </aside>
 
@@ -109,6 +109,25 @@
             <h2 class="card-title">Urge Frequency (Past 7 Days)</h2>
             <div class="chart-wrapper">
               <canvas id="urge-chart" width="800" height="220"></canvas>
+            </div>
+          </div>
+
+          <!-- Past Streaks History -->
+          <div class="card full-width" id="past-streaks-card">
+            <h2 class="card-title">Past Streaks</h2>
+            <div class="table-wrapper">
+              <table class="rules-table">
+                <thead>
+                  <tr>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th style="text-align: right;">Duration</th>
+                  </tr>
+                </thead>
+                <tbody id="streak-history-list">
+                  <!-- Dynamic entries -->
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -275,7 +294,7 @@
             <div class="step-card">
               <div class="step-num">3</div>
               <h3>How to Disable</h3>
-              <p>Open <strong>Task Manager</strong> (<code class="selectable-code">Ctrl+Shift+Esc</code>), look for **zenith-shield** in the Background Processes list, and click **End Task**.</p>
+              <p>Open <strong>Task Manager</strong> (<code class="selectable-code">Ctrl+Shift+Esc</code>), look for <strong>zenith-shield</strong> in the Background Processes list, and click End Task.</p>
             </div>
           </div>
 
@@ -287,6 +306,16 @@
             <span>Compiled Executable generated successfully at the root folder: zenith-shield.exe</span>
           </div>
         </div>
+
+        <div class="card incognito-card" style="margin-top: 20px;">
+          <h2>Safe Redirect Destination</h2>
+          <p class="lead-text">When you click Go Safe on the intervention page, Zenith redirects you to this URL. Set it to a productive, distraction-free page.</p>
+          <form id="safe-redirect-form" class="inline-form" style="margin-top: 16px;">
+            <input type="url" id="safe-redirect-input" placeholder="https://www.google.com" required>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </form>
+          <p id="safe-redirect-saved" style="display:none; color: #3b82f6; font-size: 12px; margin-top: 8px;">Saved.</p>
+        </div>
       </section>
 
     </main>
@@ -296,7 +325,7 @@
   <div id="relapse-modal" class="modal-overlay">
     <div class="modal-card">
       <h2>Reset Clean Streak?</h2>
-      <p>Accepting a relapse is part of recovery. Be honest with yourself. Resetting will archive your previous streak and start a fresh counter from now.</p>
+      <p>Accepting a relapse is part of recovery. Be honest with yourself. This will archive your previous streak and start a fresh counter from now.</p>
       <div class="modal-actions">
         <button id="confirm-reset-btn" class="btn btn-danger">Yes, Reset Streak</button>
         <button id="cancel-reset-btn" class="btn btn-secondary">Cancel</button>

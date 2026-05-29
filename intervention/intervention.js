@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const progressBar = document.getElementById('timer-progress');
   const timerLabel = document.getElementById('timer-label');
   const actionGrid = document.getElementById('action-grid');
-  
+
   const safetyBtn = document.getElementById('safety-btn');
   const breatheAgainBtn = document.getElementById('breathe-again-btn');
   const proceedBtn = document.getElementById('proceed-btn');
@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Start 10-second stability countdown
   startFrictionTimer(10, () => {
-    // Timer complete callback
     timerBox.style.display = 'none';
     actionGrid.classList.remove('hide');
   });
@@ -51,8 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   breatheAgainBtn.addEventListener('click', () => {
     actionGrid.classList.add('hide');
     timerBox.style.display = 'block';
-    
-    // Reset and start 10s timer again
+
     startFrictionTimer(10, () => {
       timerBox.style.display = 'none';
       actionGrid.classList.remove('hide');
@@ -66,10 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
       bypassClickCount = 1;
       proceedBtn.disabled = true;
       proceedBtn.style.opacity = '0.5';
-      
+
       let secondsLeft = 5;
       proceedBtn.textContent = `Ponder for ${secondsLeft}s...`;
-      
+
       const interval = setInterval(() => {
         secondsLeft--;
         if (secondsLeft > 0) {
@@ -79,17 +77,46 @@ document.addEventListener('DOMContentLoaded', () => {
           proceedBtn.disabled = false;
           proceedBtn.style.opacity = '1';
           proceedBtn.classList.remove('btn-danger-mute');
-          proceedBtn.classList.add('btn-danger'); // Make it high contrast red
+          proceedBtn.classList.add('btn-danger');
           proceedBtn.textContent = 'Confirm Bypass (Relapse)';
         }
       }, 1000);
     } else {
-      // Act on bypass
-      if (originalUrl) {
-        window.location.href = originalUrl;
-      } else {
-        window.location.href = 'https://www.google.com';
-      }
+      // Log relapse: reset streak and archive previous streak
+      chrome.storage.local.get(['streakStartDate', 'streakHistory', 'relapseHistory'], (data) => {
+        const nowStr = new Date().toISOString();
+        const prevStart = data.streakStartDate;
+        const streakHistory = data.streakHistory || [];
+        const relapseHistory = data.relapseHistory || [];
+
+        // Archive the previous streak
+        if (prevStart) {
+          const start = new Date(prevStart);
+          const end = new Date();
+          const days = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+          streakHistory.push({ start: prevStart, end: nowStr, days });
+        }
+
+        // Log the relapse event
+        relapseHistory.unshift({
+          date: nowStr,
+          trigger: trigger,
+          source: originalUrl || 'manual'
+        });
+
+        chrome.storage.local.set({
+          streakStartDate: nowStr,
+          streakHistory,
+          relapseHistory,
+          lastMilestoneNotified: 0 // reset milestone tracking on new streak
+        }, () => {
+          if (originalUrl) {
+            window.location.href = originalUrl;
+          } else {
+            window.location.href = 'https://www.google.com';
+          }
+        });
+      });
     }
   });
 
@@ -97,34 +124,29 @@ document.addEventListener('DOMContentLoaded', () => {
   let breathingTimeout;
   function startBreathingCycle() {
     let phase = 0;
-    
+
     function runPhase() {
-      // Reset classes
       breathingCircle.classList.remove('inhale', 'hold', 'exhale', 'resting-hold');
 
       if (phase === 0) {
-        // Inhale: 4 seconds
         breathingCircle.classList.add('inhale');
         breathingText.textContent = 'Inhale';
         breathingInstruction.textContent = 'Breathe in slowly through your nose...';
         phase = 1;
         breathingTimeout = setTimeout(runPhase, 4000);
       } else if (phase === 1) {
-        // Hold: 4 seconds
         breathingCircle.classList.add('hold');
         breathingText.textContent = 'Hold';
         breathingInstruction.textContent = 'Suspend your breath calmly...';
         phase = 2;
         breathingTimeout = setTimeout(runPhase, 4000);
       } else if (phase === 2) {
-        // Exhale: 4 seconds
         breathingCircle.classList.add('exhale');
         breathingText.textContent = 'Exhale';
         breathingInstruction.textContent = 'Release your breath gently from your mouth...';
         phase = 3;
         breathingTimeout = setTimeout(runPhase, 4000);
       } else if (phase === 3) {
-        // Hold: 4 seconds
         breathingCircle.classList.add('resting-hold');
         breathingText.textContent = 'Hold';
         breathingInstruction.textContent = 'Keep your lungs comfortably empty...';
@@ -140,14 +162,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function startFrictionTimer(durationSeconds, onComplete) {
     let start = null;
     progressBar.style.width = '0%';
-    
+
     function step(timestamp) {
       if (!start) start = timestamp;
       const elapsed = (timestamp - start) / 1000;
       const progress = Math.min(elapsed / durationSeconds, 1);
-      
+
       progressBar.style.width = `${progress * 100}%`;
-      
+
       const secondsRemaining = Math.max(0, Math.ceil(durationSeconds - elapsed));
       if (secondsRemaining > 0) {
         timerLabel.textContent = `Stabilizing attention: ${secondsRemaining}s`;
@@ -158,13 +180,13 @@ document.addEventListener('DOMContentLoaded', () => {
         onComplete();
       }
     }
-    
+
     requestAnimationFrame(step);
   }
 
   // Escape HTML output utility
   function escapeHTML(str) {
-    return str.replace(/[&<>'"]/g, 
+    return str.replace(/[&<>'"]/g,
       tag => ({
         '&': '&amp;',
         '<': '&lt;',

@@ -44,7 +44,26 @@ const ZenithDictionary = {
     'janitorai.com',
     'novelai.net',
     'crushon.ai',
-    'pixai.art'
+    'pixai.art',
+    // Extended blocklist
+    'hanime.tv',
+    'hentai2read.com',
+    'mangahentai.net',
+    'e-hentai.org',
+    'exhentai.org',
+    'kemono.party',
+    'luscious.net',
+    'svscomics.com',
+    'hentaimama.io',
+    'hentaicosplay.xxx',
+    'simply-hentai.com',
+    'hentai-foundry.com',
+    'doujins.com',
+    'imhentai.xxx',
+    'myreadingmanga.info',
+    'tsumino.com',
+    'fakku.net',
+    'comickiba.com'
   ],
 
   // Specific keywords to detect in URLs or search queries
@@ -98,16 +117,38 @@ const ZenithDictionary = {
     'seks',
     'mesum',
     'porno',
-    'semi'
+    'semi',
+    'kemono',
+    'luscious',
+    'hanime'
   ],
 
-  // Common adult paths/categories that might appear inside normal websites
+  // Common adult paths/categories — catches 18+ sections on mixed-content sites
+  // (e.g. toongod.com/adult/, toomics.com/genre/adult/)
   blockedPaths: [
     '/porn/',
     '/nsfw/',
     '/hentai/',
     '/xxx/',
-    '/erotica/'
+    '/erotica/',
+    '/adult/',
+    '/adults/',
+    '/adult-',
+    '-adult/',
+    '/mature/',
+    '/mature-',
+    '/r18/',
+    '/r-18/',
+    '/18plus/',
+    '/18-plus/',
+    '/18only/',
+    '/18-only/',
+    '/explicit/',
+    '/uncensored/',
+    '/lewd/',
+    '/ecchi/',
+    '/doujin/',
+    '/doujinshi/'
   ]
 };
 

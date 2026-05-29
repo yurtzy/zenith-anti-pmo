@@ -3,6 +3,9 @@
 
 importScripts('utils/words.js');
 
+// Milestone thresholds in days
+const MILESTONES = [7, 14, 30, 60, 90, 180, 365];
+
 // Initialize settings and stats on install
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get([
@@ -11,7 +14,10 @@ chrome.runtime.onInstalled.addListener(() => {
     'journalEntries',
     'customBlockedSites',
     'safeRedirectUrl',
-    'urgeHistory'
+    'urgeHistory',
+    'streakHistory',
+    'relapseHistory',
+    'lastMilestoneNotified'
   ], (result) => {
     const updates = {};
     const nowStr = new Date().toISOString();
@@ -32,8 +38,16 @@ chrome.runtime.onInstalled.addListener(() => {
       updates.safeRedirectUrl = 'https://www.google.com';
     }
     if (!result.urgeHistory) {
-      // Structure: { dateStr: count }
       updates.urgeHistory = {};
+    }
+    if (!result.streakHistory) {
+      updates.streakHistory = [];
+    }
+    if (!result.relapseHistory) {
+      updates.relapseHistory = [];
+    }
+    if (result.lastMilestoneNotified === undefined) {
+      updates.lastMilestoneNotified = 0;
     }
 
     chrome.storage.local.set(updates, () => {
@@ -47,11 +61,9 @@ function getSearchQuery(urlString) {
   try {
     const url = new URL(urlString);
     const host = url.hostname.toLowerCase();
-    
-    // Check if it's a known search engine
+
     if (host.includes('google.') || host.includes('bing.com') || host.includes('duckduckgo.com') || host.includes('yahoo.com') || host.includes('ecosia.org')) {
       const searchParams = new URLSearchParams(url.search);
-      // 'q' is standard for Google, Bing, DuckDuckGo, Ecosia. 'p' is for Yahoo.
       const query = searchParams.get('q') || searchParams.get('p') || '';
       return query.toLowerCase().trim();
     }
@@ -67,13 +79,13 @@ async function checkUrlMatch(urlString) {
     const url = new URL(urlString);
     const host = url.hostname.toLowerCase();
     const path = url.pathname.toLowerCase();
-    
+
     // 1. Check custom blocked sites
     const storage = await new Promise((resolve) => {
       chrome.storage.local.get(['customBlockedSites'], resolve);
     });
     const customBlocked = storage.customBlockedSites || [];
-    
+
     for (const site of customBlocked) {
       const cleanSite = site.toLowerCase().trim();
       if (cleanSite && (host === cleanSite || host.endsWith('.' + cleanSite) || urlString.toLowerCase().includes(cleanSite))) {
@@ -100,10 +112,8 @@ async function checkUrlMatch(urlString) {
       // 4. Check search query intentions
       const searchQuery = getSearchQuery(urlString);
       if (searchQuery) {
-        // Split query into words to prevent partial match issues (e.g. "expensive" matching "sex")
         const queryWords = searchQuery.split(/\s+/);
         for (const keyword of dictionary.triggerKeywords) {
-          // If keyword has spaces, do a direct substring check, otherwise check word-by-word
           if (keyword.includes(' ')) {
             if (searchQuery.includes(keyword)) {
               return { matched: true, type: 'search', trigger: keyword };
@@ -122,39 +132,119 @@ async function checkUrlMatch(urlString) {
   return { matched: false };
 }
 
-// Monitor navigation in real-time
-chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
-  // We only intercept main frame loads (tab changes, direct navigation)
+// Check and fire milestone notifications
+function checkMilestones(streakDays) {
+  chrome.storage.local.get(['lastMilestoneNotified'], (data) => {
+    const lastNotified = data.lastMilestoneNotified || 0;
+
+    // Find the highest milestone reached that hasn't been notified yet
+    let nextMilestone = null;
+    for (const m of MILESTONES) {
+      if (streakDays >= m && m > lastNotified) {
+        nextMilestone = m;
+      }
+    }
+
+    if (nextMilestone !== null) {
+      chrome.storage.local.set({ lastMilestoneNotified: nextMilestone });
+
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon128.png',
+        title: 'Zenith — Milestone Reached',
+        message: `${nextMilestone} days clean. Discipline compounds. Keep going.`,
+        priority: 2
+      });
+    }
+  });
+}
+
+// Monitor navigation — using onCommitted for reliable redirect (fires after navigation commits)
+chrome.webNavigation.onCommitted.addListener(async (details) => {
+  // Only intercept main frame loads
   if (details.frameId !== 0) return;
 
   const url = details.url;
-  // Ignore chrome:// pages, extension files, or local resources
-  if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url.startsWith('about:')) {
-    return;
-  }
 
   const match = await checkUrlMatch(url);
   if (match.matched) {
     console.log(`Zenith Intercepted: ${url} due to trigger: ${match.trigger} (${match.type})`);
-    
+
     // Log the urge surfed in stats
-    chrome.storage.local.get(['urgesSurfed', 'urgeHistory'], (data) => {
+    chrome.storage.local.get(['urgesSurfed', 'urgeHistory', 'streakStartDate'], (data) => {
       const totalUrges = (data.urgesSurfed || 0) + 1;
       const history = data.urgeHistory || {};
       const todayStr = new Date().toISOString().split('T')[0];
-      
+
       history[todayStr] = (history[todayStr] || 0) + 1;
-      
+
       chrome.storage.local.set({
         urgesSurfed: totalUrges,
         urgeHistory: history
       });
+
+      // Check milestones on every intercept (low cost)
+      if (data.streakStartDate) {
+        const start = new Date(data.streakStartDate);
+        const now = new Date();
+        const diffDays = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+        checkMilestones(diffDays);
+      }
     });
 
-    // Determine redirection destination
+    // Redirect the tab
     const interventionUrl = chrome.runtime.getURL(`intervention/intervention.html?trigger=${encodeURIComponent(match.trigger)}&original=${encodeURIComponent(url)}`);
-    
-    // Redirect the tab immediately
     chrome.tabs.update(details.tabId, { url: interventionUrl });
+  }
+}, {
+  // Only fire on http/https — skips chrome://, file://, chrome-extension:// at the platform level
+  url: [{ schemes: ['http', 'https'] }]
+});
+
+// Handle DOM_TRIGGER messages from content_scanner.js
+// The content script cannot do chrome.tabs.update directly, so it sends a message here.
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (message.type === 'DOM_TRIGGER' && sender.tab) {
+    const tabId = sender.tab.id;
+    const trigger = message.trigger || 'dom-content-scan';
+    const url = message.url || sender.tab.url || '';
+
+    console.log(`[Zenith] DOM scanner trigger on tab ${tabId}: ${trigger}`);
+
+    // Log the event
+    chrome.storage.local.get(['urgesSurfed', 'urgeHistory'], (data) => {
+      const totalUrges = (data.urgesSurfed || 0) + 1;
+      const history = data.urgeHistory || {};
+      const todayStr = new Date().toISOString().split('T')[0];
+      history[todayStr] = (history[todayStr] || 0) + 1;
+      chrome.storage.local.set({ urgesSurfed: totalUrges, urgeHistory: history });
+    });
+
+    const interventionUrl = chrome.runtime.getURL(
+      `intervention/intervention.html?trigger=${encodeURIComponent(trigger)}&original=${encodeURIComponent(url)}`
+    );
+    chrome.tabs.update(tabId, { url: interventionUrl });
+  }
+
+  // Handle 'report-current-tab' from popup — adds the current tab URL to customBlockedSites
+  if (message.type === 'REPORT_TAB' && sender.tab === undefined) {
+    // This comes from popup, so we need the tab info passed in the message
+    const { reportUrl } = message;
+    if (!reportUrl) return;
+
+    try {
+      const urlObj = new URL(reportUrl);
+      const hostname = urlObj.hostname.toLowerCase().replace(/^www\./, '');
+
+      chrome.storage.local.get(['customBlockedSites'], (data) => {
+        const sites = data.customBlockedSites || [];
+        if (!sites.includes(hostname)) {
+          sites.push(hostname);
+          chrome.storage.local.set({ customBlockedSites: sites });
+        }
+      });
+    } catch (e) {
+      // Invalid URL
+    }
   }
 });

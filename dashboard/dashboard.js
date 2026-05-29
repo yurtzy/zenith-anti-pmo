@@ -9,19 +9,21 @@ document.addEventListener('DOMContentLoaded', () => {
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const tabId = btn.getAttribute('data-tab');
-      
+
       navBtns.forEach(b => b.classList.remove('active'));
       tabContents.forEach(c => c.classList.remove('active'));
-      
+
       btn.classList.add('active');
       const targetTab = document.getElementById(tabId);
       if (targetTab) {
         targetTab.classList.add('active');
       }
 
-      // Re-render chart if switching to overview
       if (tabId === 'overview') {
         loadOverviewData();
+      }
+      if (tabId === 'shield') {
+        loadSafeRedirectUrl();
       }
     });
   });
@@ -47,8 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (cancelResetBtn && modal) {
     cancelResetBtn.addEventListener('click', () => modal.classList.remove('open'));
   }
-  
-  // Close modal clicking outside the card
+
   if (modal) {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) modal.classList.remove('open');
@@ -58,9 +59,25 @@ document.addEventListener('DOMContentLoaded', () => {
   if (confirmResetBtn) {
     confirmResetBtn.addEventListener('click', () => {
       const nowStr = new Date().toISOString();
-      chrome.storage.local.set({ streakStartDate: nowStr }, () => {
-        modal.classList.remove('open');
-        loadOverviewData();
+
+      // Archive previous streak before resetting
+      chrome.storage.local.get(['streakStartDate', 'streakHistory'], (data) => {
+        const streakHistory = data.streakHistory || [];
+        if (data.streakStartDate) {
+          const start = new Date(data.streakStartDate);
+          const end = new Date();
+          const days = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+          streakHistory.push({ start: data.streakStartDate, end: nowStr, days });
+        }
+
+        chrome.storage.local.set({
+          streakStartDate: nowStr,
+          streakHistory,
+          lastMilestoneNotified: 0
+        }, () => {
+          modal.classList.remove('open');
+          loadOverviewData();
+        });
       });
     });
   }
@@ -79,13 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
   loadJournalEntries();
   loadCustomBlockRules();
   checkIncognitoStatus();
+  loadSafeRedirectUrl();
 
   // Handle Journal Submission
   const journalForm = document.getElementById('journal-form');
   if (journalForm) {
     journalForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      
+
       const trigger = document.getElementById('journal-trigger').value;
       const intensity = document.getElementById('journal-intensity').value;
       const notes = document.getElementById('journal-notes').value;
@@ -100,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       chrome.storage.local.get(['journalEntries'], (data) => {
         const entries = data.journalEntries || [];
-        entries.unshift(newEntry); // Prepend new entry
+        entries.unshift(newEntry);
         chrome.storage.local.set({ journalEntries: entries }, () => {
           journalForm.reset();
           if (sliderVal) sliderVal.textContent = '5';
@@ -117,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const input = document.getElementById('custom-site-input');
       const rawSite = input.value.trim().toLowerCase();
-      
+
       if (!rawSite) return;
 
       chrome.storage.local.get(['customBlockedSites'], (data) => {
@@ -132,11 +150,40 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+
+  // Handle Safe Redirect URL form
+  const safeRedirectForm = document.getElementById('safe-redirect-form');
+  if (safeRedirectForm) {
+    safeRedirectForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('safe-redirect-input');
+      const url = input.value.trim();
+      if (!url) return;
+
+      chrome.storage.local.set({ safeRedirectUrl: url }, () => {
+        const savedMsg = document.getElementById('safe-redirect-saved');
+        if (savedMsg) {
+          savedMsg.style.display = 'block';
+          setTimeout(() => { savedMsg.style.display = 'none'; }, 2000);
+        }
+      });
+    });
+  }
 });
+
+// Load current safe redirect URL into the input
+function loadSafeRedirectUrl() {
+  chrome.storage.local.get(['safeRedirectUrl'], (data) => {
+    const input = document.getElementById('safe-redirect-input');
+    if (input && data.safeRedirectUrl) {
+      input.value = data.safeRedirectUrl;
+    }
+  });
+}
 
 // Calculate streak details and paint UI
 function loadOverviewData() {
-  chrome.storage.local.get(['streakStartDate', 'urgesSurfed', 'urgeHistory'], (data) => {
+  chrome.storage.local.get(['streakStartDate', 'urgesSurfed', 'urgeHistory', 'streakHistory'], (data) => {
     const totalUrges = data.urgesSurfed || 0;
     document.getElementById('total-urges').textContent = totalUrges;
 
@@ -145,7 +192,7 @@ function loadOverviewData() {
     const now = new Date();
     const diffTime = Math.abs(now - startDate);
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     document.getElementById('streak-days').textContent = diffDays;
 
     // Streak Circular Progress Ring
@@ -154,10 +201,8 @@ function loadOverviewData() {
     if (ring) {
       const circ = 439.82;
       ring.style.strokeDasharray = `${circ} ${circ}`;
-      
-      // Calculate 30-day milestone progress
+
       const progress = (diffDays % 30) / 30;
-      // If streak is exactly 0, show tiny indicator or empty. If non-zero but multiple of 30, show full circle.
       const displayProgress = (diffDays > 0 && diffDays % 30 === 0) ? 1.0 : (progress === 0 ? 0.02 : progress);
       const offset = circ - (displayProgress * circ);
       ring.style.strokeDashoffset = offset;
@@ -166,7 +211,7 @@ function loadOverviewData() {
     // Urge History Analytics calculations
     const history = data.urgeHistory || {};
     const dates = Object.keys(history).sort();
-    
+
     // Daily Average
     let dailyAvg = 0;
     if (dates.length > 0) {
@@ -182,15 +227,42 @@ function loadOverviewData() {
     dates.forEach(d => {
       if (history[d] > peakCount) {
         peakCount = history[d];
-        // Format day name nicely
         const dayObj = new Date(d);
-        peakDay = dayObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ` (${peakCount} Urges)`;
+        peakDay = dayObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }) + ` (${peakCount})`;
       }
     });
     document.getElementById('peak-day').textContent = peakDay;
 
-    // Draw the HTML5 custom charts
+    // Draw chart
     drawUrgeChart(history);
+
+    // Render past streaks table
+    renderStreakHistory(data.streakHistory || []);
+  });
+}
+
+// Render past streaks history table
+function renderStreakHistory(history) {
+  const tbody = document.getElementById('streak-history-list');
+  if (!tbody) return;
+
+  if (history.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#55555c;">No completed streaks yet. Keep going.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = '';
+  // Most recent first
+  [...history].reverse().forEach(entry => {
+    const startStr = new Date(entry.start).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    const endStr = new Date(entry.end).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${escapeHTML(startStr)}</td>
+      <td>${escapeHTML(endStr)}</td>
+      <td style="text-align:right; font-variant-numeric: tabular-nums;">${entry.days} day${entry.days !== 1 ? 's' : ''}</td>
+    `;
+    tbody.appendChild(row);
   });
 }
 
@@ -200,14 +272,11 @@ function drawUrgeChart(history) {
   if (!canvas) return;
 
   const ctx = canvas.getContext('2d');
-  
-  // Clear canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Generate list of past 7 days dates
   const daysData = [];
   const now = new Date();
-  
+
   for (let i = 6; i >= 0; i--) {
     const tempDate = new Date();
     tempDate.setDate(now.getDate() - i);
@@ -220,68 +289,55 @@ function drawUrgeChart(history) {
     });
   }
 
-  // Find max value in past 7 days to scale chart
-  let maxCount = 4; // minimum scale ceiling
+  let maxCount = 4;
   daysData.forEach(d => {
     if (d.count > maxCount) maxCount = d.count;
   });
-  
-  // Design Layout Variables
+
   const chartHeight = 160;
   const chartWidth = canvas.width - 60;
   const paddingLeft = 40;
   const paddingTop = 20;
-  
-  // Draw horizontal grid lines and vertical labels
+
   ctx.strokeStyle = '#222227';
   ctx.lineWidth = 1;
   ctx.fillStyle = '#8e8e93';
   ctx.font = '11px Inter, sans-serif';
-  
+
   const gridLines = 4;
   for (let i = 0; i <= gridLines; i++) {
     const y = paddingTop + (chartHeight / gridLines) * i;
     const value = Math.round(maxCount - (maxCount / gridLines) * i);
-    
-    // Grid Line
+
     ctx.beginPath();
     ctx.moveTo(paddingLeft, y);
     ctx.lineTo(paddingLeft + chartWidth, y);
     ctx.stroke();
-    
-    // Y-Axis labels
+
     ctx.fillText(value, 15, y + 4);
   }
 
-  // Draw Bars
   const barSpacing = chartWidth / 7;
   const barWidth = 32;
 
   daysData.forEach((day, index) => {
     const x = paddingLeft + (barSpacing * index) + (barSpacing - barWidth) / 2;
-    
-    // Calculate height based on scale
     const barHeight = (day.count / maxCount) * chartHeight;
     const y = paddingTop + chartHeight - barHeight;
 
-    // Draw Bar
     if (day.count > 0) {
-      // Sleek solid blue bar
       ctx.fillStyle = '#2563eb';
       ctx.fillRect(x, y, barWidth, barHeight);
-      
-      // Draw count text on top of the bar
+
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 11px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(day.count, x + barWidth / 2, y - 6);
     } else {
-      // Empty day indicator (very faint solid card outline)
       ctx.fillStyle = '#141418';
       ctx.fillRect(x, paddingTop + chartHeight - 4, barWidth, 4);
     }
 
-    // Draw X-axis label
     ctx.fillStyle = '#8e8e93';
     ctx.font = '11px Inter, sans-serif';
     ctx.textAlign = 'center';
@@ -294,7 +350,7 @@ function loadJournalEntries() {
   chrome.storage.local.get(['journalEntries'], (data) => {
     const entries = data.journalEntries || [];
     const listElement = document.getElementById('journal-list');
-    
+
     if (!listElement) return;
 
     if (entries.length === 0) {
@@ -307,31 +363,52 @@ function loadJournalEntries() {
     }
 
     listElement.innerHTML = '';
-    entries.forEach(entry => {
+    entries.forEach((entry, index) => {
       const dateObj = new Date(entry.date);
-      const formattedDate = dateObj.toLocaleDateString(undefined, { 
-        month: 'short', 
-        day: 'numeric', 
-        hour: '2-digit', 
-        minute: '2-digit' 
+      const formattedDate = dateObj.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
 
       const entryCard = document.createElement('div');
       entryCard.className = 'journal-entry-card';
-      
+
       entryCard.innerHTML = `
         <div class="journal-header">
           <div class="journal-meta">
             <span class="journal-tag">${escapeHTML(entry.trigger)}</span>
-            <span class="journal-intensity-tag">Urge Intensity: ${entry.intensity}/10</span>
+            <span class="journal-intensity-tag">Intensity: ${entry.intensity}/10</span>
           </div>
-          <span class="journal-date">${formattedDate}</span>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span class="journal-date">${formattedDate}</span>
+            <button class="delete-rule-btn delete-journal-btn" data-index="${index}" title="Delete entry">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="journal-body">${escapeHTML(entry.notes)}</div>
       `;
-      
+
+      entryCard.querySelector('.delete-journal-btn').addEventListener('click', () => {
+        deleteJournalEntry(index);
+      });
+
       listElement.appendChild(entryCard);
     });
+  });
+}
+
+// Delete a journal entry by index
+function deleteJournalEntry(index) {
+  chrome.storage.local.get(['journalEntries'], (data) => {
+    const entries = data.journalEntries || [];
+    entries.splice(index, 1);
+    chrome.storage.local.set({ journalEntries: entries }, loadJournalEntries);
   });
 }
 
@@ -340,7 +417,7 @@ function loadCustomBlockRules() {
   chrome.storage.local.get(['customBlockedSites'], (data) => {
     const sites = data.customBlockedSites || [];
     const listElement = document.getElementById('custom-sites-list');
-    
+
     if (!listElement) return;
 
     if (sites.length === 0) {
@@ -366,7 +443,7 @@ function loadCustomBlockRules() {
           </button>
         </td>
       `;
-      
+
       row.querySelector('.delete-rule-btn').addEventListener('click', () => {
         deleteBlockRule(index);
       });
@@ -406,7 +483,8 @@ function checkIncognitoStatus() {
 
 // Escapes HTML inputs to prevent XSS issues inside storage
 function escapeHTML(str) {
-  return str.replace(/[&<>'"]/g, 
+  if (!str) return '';
+  return str.replace(/[&<>'"]/g,
     tag => ({
       '&': '&amp;',
       '<': '&lt;',

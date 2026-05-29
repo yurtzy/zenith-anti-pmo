@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Zenith Anti-PMO",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "description": "A premium, minimalist mindfulness companion to help you surf the urge and build healthy habits. No gradients, no distraction, pure focus.",
   "permissions": [
     "storage",
     "webNavigation",
-    "tabs"
+    "tabs",
+    "notifications"
   ],
   "background": {
     "service_worker": "background.js"
@@ -21,6 +22,12 @@
   },
   "options_page": "dashboard/dashboard.html",
   "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["utils/words.js", "content_scanner.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
     {
       "matches": [
         "http://localhost:7860/*",

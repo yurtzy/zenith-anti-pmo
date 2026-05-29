@@ -9,11 +9,6 @@ namespace ZenithShield
     {
         private const string ExtensionId = "bonebkgnmbaongbgjfalllepkbkahhda";
 
-        [System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true)]
-        private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-
-        private const uint WM_CLOSE = 0x0010;
-
         // Trigger words to monitor in window titles
         private static readonly string[] Triggers = new string[]
         {
@@ -24,13 +19,6 @@ namespace ZenithShield
             "hentaihaven", "javfree", "bukkake", "civitai", "comfyui", 
             "stable diffusion", "sillytavern", "bokep", "sange", "ngocok", 
             "lendir", "cersex", "colay", "colok", "seks", "mesum", "porno", "semi"
-        };
-
-        // Browsers to strictly monitor / terminate if they contain triggers
-        private static readonly string[] NonProtectedBrowsers = new string[]
-        {
-            "msedge", "firefox", "opera", "brave", "safari", "iexplore",
-            "waterfox", "pale moon", "tor", "torbrowser", "duckduckgo"
         };
 
         [STAThread]
@@ -215,8 +203,12 @@ namespace ZenithShield
                 {
                     string processName = process.ProcessName.ToLower();
 
-                    if (processName == "idle" || processName == "system" || 
-                        processName == "zenith-shield")
+                    // Skip system, self, and all known browsers (browsers are handled by the Chrome extension)
+                    if (processName == "idle" || processName == "system" ||
+                        processName == "zenith-shield" || processName == "chrome" ||
+                        processName == "msedge" || processName == "firefox" ||
+                        processName == "opera" || processName == "brave" ||
+                        processName == "iexplore" || processName == "waterfox")
                     {
                         continue;
                     }
@@ -228,35 +220,11 @@ namespace ZenithShield
                         continue;
                     }
 
-                    bool isNonProtectedBrowser = false;
-                    foreach (string browser in NonProtectedBrowsers)
-                    {
-                        if (processName.Contains(browser))
-                        {
-                            isNonProtectedBrowser = true;
-                            break;
-                        }
-                    }
-
-                    bool isChrome = processName == "chrome";
-
                     foreach (string trigger in Triggers)
                     {
-                        if ((isNonProtectedBrowser && windowTitle.Contains(trigger)) || 
-                            (isChrome && windowTitle.Contains(trigger)) ||
-                            (!isNonProtectedBrowser && !isChrome && IsExplicitMatch(windowTitle, trigger)))
+                        if (IsExplicitMatch(windowTitle, trigger))
                         {
-                            if (isChrome)
-                            {
-                                if (process.MainWindowHandle != IntPtr.Zero)
-                                {
-                                    PostMessage(process.MainWindowHandle, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
-                                }
-                            }
-                            else
-                            {
-                                process.Kill();
-                            }
+                            process.Kill();
                             LaunchZenithIntervention(trigger, processName);
                             break;
                         }
