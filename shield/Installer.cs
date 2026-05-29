@@ -73,7 +73,7 @@ namespace ZenithInstaller
 
         // Step 5: Finished Controls
         private Label finishLabel;
-        private Label finishDesc;
+        private TextBox finishDesc;
 
         public InstallerForm()
         {
@@ -469,24 +469,29 @@ namespace ZenithInstaller
                 finishLabel.Location = new Point(0, 5);
                 contentPanel.Controls.Add(finishLabel);
 
-                finishDesc = new Label();
+                finishDesc = new TextBox();
+                finishDesc.Multiline = true;
+                finishDesc.ScrollBars = ScrollBars.Vertical;
+                finishDesc.ReadOnly = true;
+                finishDesc.BackColor = Color.FromArgb(10, 10, 12);
+                finishDesc.ForeColor = Color.FromArgb(142, 142, 147);
+                finishDesc.BorderStyle = BorderStyle.None;
                 
-                string guardStatus = (chkShield != null && chkShield.Checked) ? "• System bypass guard is active in background.\n" : "";
-                string startupStatus = (chkStartup != null && chkStartup.Checked) ? "• Guard will automatically start on Windows boot.\n" : "";
-                string watchdogStatus = (chkWatchdog != null && chkWatchdog.Checked) ? "• Anti-kill watchdog protection enabled.\n" : "";
-                string desktopStatus = (chkDesktop != null && chkDesktop.Checked) ? "• Standalone desktop shortcut generated.\n" : "";
+                string guardStatus = (chkShield != null && chkShield.Checked) ? "• System bypass guard is active in background.\r\n" : "";
+                string startupStatus = (chkStartup != null && chkStartup.Checked) ? "• Guard will automatically start on Windows boot.\r\n" : "";
+                string watchdogStatus = (chkWatchdog != null && chkWatchdog.Checked) ? "• Anti-kill watchdog protection enabled.\r\n" : "";
+                string desktopStatus = (chkDesktop != null && chkDesktop.Checked) ? "• Standalone desktop shortcut generated.\r\n" : "";
 
                 finishDesc.Text = guardStatus + startupStatus + watchdogStatus + desktopStatus +
-                                  "• Extension directory path copied to your clipboard.\n" +
-                                  "• Google Chrome opened automatically.\n\n" +
-                                  "Required Actions to complete integration:\n" +
-                                  "1. In Chrome, click 'Load unpacked' (Developer Mode enabled).\n" +
-                                  "2. Press Ctrl+V to paste the path, and click Select Folder.\n" +
+                                  "• Extension directory path copied to your clipboard.\r\n" +
+                                  "• Google Chrome opened automatically.\r\n\r\n" +
+                                  "Required Actions to complete integration:\r\n" +
+                                  "1. In Chrome, click 'Load unpacked' (Developer Mode enabled).\r\n" +
+                                  "2. Press Ctrl+V to paste the path, and click Select Folder.\r\n" +
                                   "3. Enable 'Allow in incognito' in extensions Details.";
                                   
                 finishDesc.Font = new Font("Arial", 9F);
-                finishDesc.ForeColor = Color.FromArgb(142, 142, 147);
-                finishDesc.Size = new Size(contentPanel.Width, 140);
+                finishDesc.Size = new Size(contentPanel.Width - 10, 150);
                 finishDesc.Location = new Point(0, 40);
                 contentPanel.Controls.Add(finishDesc);
             }
