@@ -6,9 +6,9 @@ $shieldSource = Join-Path $PSScriptRoot "Shield.cs"
 $appSource = Join-Path $PSScriptRoot "App.cs"
 $installerSource = Join-Path $PSScriptRoot "Installer.cs"
 
-$shieldOutput = Join-Path $PSScriptRoot "..\zenith-shield.exe"
-$appOutput = Join-Path $PSScriptRoot "..\zenith-app.exe"
-$installerOutput = Join-Path $PSScriptRoot "..\zenith-setup.exe"
+$shieldOutput = Join-Path $PSScriptRoot "..\bin\zenith-shield.exe"
+$appOutput = Join-Path $PSScriptRoot "..\bin\zenith-app.exe"
+$installerOutput = Join-Path $PSScriptRoot "..\bin\zenith-setup.exe"
 
 if (-not (Test-Path $compiler)) {
     Write-Error "Microsoft .NET C# Compiler (csc.exe) not found at standard path: $compiler"
@@ -54,4 +54,4 @@ if ($LASTEXITCODE -eq 0) {
     exit 1
 }
 
-Write-Host "`nAll Zenith C# components compiled natively and stored in root directory successfully." -ForegroundColor Green
+Write-Host "`nAll Zenith C# components compiled natively and stored in bin directory successfully." -ForegroundColor Green

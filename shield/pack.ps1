@@ -30,18 +30,26 @@ if (Test-Path $stagingDir) {
 New-Item -ItemType Directory -Path $stagingDir -Force | Out-Null
 
 # Copy required files and folders to staging
-Copy-Item (Join-Path $rootDir "zenith-setup.exe") $stagingDir
-Copy-Item (Join-Path $rootDir "zenith-shield.exe") $stagingDir
-Copy-Item (Join-Path $rootDir "zenith-app.exe") $stagingDir
-Copy-Item (Join-Path $rootDir "manifest.json") $stagingDir
-Copy-Item (Join-Path $rootDir "background.js") $stagingDir
-Copy-Item (Join-Path $rootDir "extension_id.txt") $stagingDir
+Copy-Item (Join-Path $rootDir "bin\zenith-setup.exe") $stagingDir
+Copy-Item (Join-Path $rootDir "bin\zenith-shield.exe") $stagingDir
+Copy-Item (Join-Path $rootDir "bin\zenith-app.exe") $stagingDir
 
-Copy-Item (Join-Path $rootDir "dashboard") $stagingDir -Recurse
-Copy-Item (Join-Path $rootDir "intervention") $stagingDir -Recurse
-Copy-Item (Join-Path $rootDir "popup") $stagingDir -Recurse
-Copy-Item (Join-Path $rootDir "icons") $stagingDir -Recurse
-Copy-Item (Join-Path $rootDir "utils") $stagingDir -Recurse
+# Create extension directory inside staging area
+$stagingExtensionDir = Join-Path $stagingDir "extension"
+New-Item -ItemType Directory -Path $stagingExtensionDir -Force | Out-Null
+
+# Copy extension files to extension subfolder in staging
+Copy-Item (Join-Path $rootDir "extension\manifest.json") $stagingExtensionDir
+Copy-Item (Join-Path $rootDir "extension\background.js") $stagingExtensionDir
+Copy-Item (Join-Path $rootDir "extension\content_scanner.js") $stagingExtensionDir
+Copy-Item (Join-Path $rootDir "extension\prompt_guard.js") $stagingExtensionDir
+Copy-Item (Join-Path $rootDir "extension\extension_id.txt") $stagingExtensionDir
+
+Copy-Item (Join-Path $rootDir "extension\dashboard") $stagingExtensionDir -Recurse
+Copy-Item (Join-Path $rootDir "extension\intervention") $stagingExtensionDir -Recurse
+Copy-Item (Join-Path $rootDir "extension\popup") $stagingExtensionDir -Recurse
+Copy-Item (Join-Path $rootDir "extension\icons") $stagingExtensionDir -Recurse
+Copy-Item (Join-Path $rootDir "extension\utils") $stagingExtensionDir -Recurse
 
 # Compress staging directory content into zip
 Compress-Archive -Path "$stagingDir\*" -DestinationPath $zipPath -Force

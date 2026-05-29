@@ -680,8 +680,8 @@ namespace ZenithInstaller
         {
             try
             {
-                // The extension matches the target installation path folder
-                Clipboard.SetText(installPath);
+                // The extension matches the target installation path's extension subfolder
+                Clipboard.SetText(Path.Combine(installPath, "extension"));
             }
             catch {}
         }
