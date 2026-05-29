@@ -581,11 +581,12 @@ namespace ZenithInstaller
 
                 finishDesc.Text = guardStatus + startupStatus + watchdogStatus + desktopStatus +
                                   "• Folder security & dynamic deletion protection enabled.\r\n" +
-                                  "• Browser extension automatically registered!\r\n\r\n" +
+                                  "• Extension folder path copied to your clipboard!\r\n\r\n" +
                                   "Required Actions to complete integration:\r\n" +
-                                  "1. Google Chrome (or Edge) has been launched.\r\n" +
-                                  "2. Click \"Enable extension\" when prompted by your browser.\r\n" +
-                                  "3. Enable \"Allow in incognito\" in extension details to ensure full protection.";
+                                  "1. In Chrome, enable 'Developer Mode' (toggle in top-right).\r\n" +
+                                  "2. Click 'Load unpacked' (button in top-left).\r\n" +
+                                  "3. Press Ctrl+V to paste the path and click 'Select Folder'.\r\n" +
+                                  "4. In extension Details, enable 'Allow in incognito'.";
                                   
                 finishDesc.Font = new Font("Arial", 9F);
                 finishDesc.Size = new Size(contentPanel.Width - 10, 150);
